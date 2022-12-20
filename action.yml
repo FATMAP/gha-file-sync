@@ -1,0 +1,27 @@
+name: git-file-sync
+author: "SlevinWasAlreadyTaken"
+description: "Help to synchronize files between repositories by opening pull requests."
+inputs:
+  REPOSITORIES:
+    description: "Line-separated list of repositories that should receive files updates through automatic pull requests."
+    required: true
+  FILES_BINDINGS:
+    description: "Line-separated list of files bindings that should be trigger updates"
+    required: true
+  DRY_RUN:
+    description: "Dry run switch: set to false to create for real pull requests"
+    default: 'true'
+  GITHUB_TOKEN:
+    description: "Line-separated list of files bindings that should be trigger updates"
+  COMMIT_MESSAGE:
+    description: "Line-separated list of files bindings that should be trigger updates"
+    default: "sync from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"
+  who:
+    default: world
+    description: "Say hello to who"
+    required: false
+runs:
+  using: docker
+  image: ./git-file-sync/Dockerfile
+  args:
+  - "-who=${{ inputs.who }}"

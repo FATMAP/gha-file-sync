@@ -29,7 +29,9 @@ func initConfig() (c Config, err error) {
 	if c.GithubToken, err = getGithubToken(); err != nil {
 		return c, err
 	}
-	c.CommitMessage = getCommitMessage()
+	if c.CommitMessage, err = getCommitMessage(); err != nil {
+		return c, err
+	}
 	return c, nil
 }
 
@@ -77,16 +79,15 @@ func getGithubToken() (string, error) {
 	return githubToken, nil
 }
 
-func getCommitMessage() string {
+func getCommitMessage() (string, error) {
 	commitMessage := os.Getenv("COMMIT_MESSAGE")
 	// default value
 	if commitMessage == "" {
-		log.Printf("COMMIT_MESSAGE empty: set to default value")
-		commitMessage = "sync from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"
+		return "", fmt.Errorf("FILES_BINDINGS is not empty but required")
 	}
 	// auto-truncate commit message - 80 characters maximum
 	if len(commitMessage) > 80 {
 		commitMessage = commitMessage[80:]
 	}
-	return commitMessage
+	return commitMessage, nil
 }

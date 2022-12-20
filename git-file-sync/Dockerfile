@@ -1,5 +1,5 @@
 FROM golang:1.19 as builder
-LABEL maintainer="Nicolas Sadin <nicolas@fatmap.com>"
+LABEL maintainer="github.com/SlevinWasAlreadyTaken"
 
 WORKDIR /app
 

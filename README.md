@@ -12,6 +12,7 @@ Github Action for Cross-Repos File Synchronisation using Pull Requests
   - Get final branch - could be an existing file-sync pull request or main.
   - Make the diff following files bindings configuration
   - Create or Update the pull request if something has changed.
+  - Remove the repository locally
 
 #### Smart Custom Detection
 

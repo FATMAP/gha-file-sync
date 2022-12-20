@@ -13,6 +13,7 @@ inputs:
     default: 'true'
   GITHUB_TOKEN:
     description: "Line-separated list of files bindings that should be trigger updates"
+    required: true
   COMMIT_MESSAGE:
     description: "Line-separated list of files bindings that should be trigger updates"
     default: "sync from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"

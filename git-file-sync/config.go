@@ -37,6 +37,7 @@ func initConfig() (c Config, err error) {
 
 func getRepositoryNames() ([]string, error) {
 	// get the raw list from env
+	fmt.Println("repos:", os.Getenv("REPOSITORIES"))
 	repoNamesStr := os.Getenv("REPOSITORIES")
 	if repoNamesStr == "" {
 		return nil, fmt.Errorf("REPOSITORIES is not empty but required")

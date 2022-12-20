@@ -11,9 +11,16 @@ import (
 type Config struct {
 	RepositoryNames []string
 	FilesBindings   []string
-	IsDryRun        bool
-	GithubToken     string
-	CommitMessage   string
+
+	IsDryRun bool
+
+	GithubToken string
+	GithubURL   string
+
+	CommitMessage        string
+	FileSyncBranchRegexp string
+
+	Workspace string
 }
 
 func initConfig() (c Config, err error) {
@@ -29,7 +36,16 @@ func initConfig() (c Config, err error) {
 	if c.GithubToken, err = getGithubToken(); err != nil {
 		return c, err
 	}
+	if c.GithubURL, err = getGithubURL(); err != nil {
+		return c, err
+	}
 	if c.CommitMessage, err = getCommitMessage(); err != nil {
+		return c, err
+	}
+	if c.FileSyncBranchRegexp, err = getFileSyncBranchRegexp(); err != nil {
+		return c, err
+	}
+	if c.Workspace, err = getWorkspace(); err != nil {
 		return c, err
 	}
 	return c, nil
@@ -40,7 +56,7 @@ func getRepositoryNames() ([]string, error) {
 	fmt.Println("repos:", os.Getenv("REPOSITORIES"))
 	repoNamesStr := os.Getenv("REPOSITORIES")
 	if repoNamesStr == "" {
-		return nil, fmt.Errorf("REPOSITORIES is not empty but required")
+		return nil, fmt.Errorf("REPOSITORIES is empty but required")
 	}
 	// trim spaces
 	repoNamesStr = strings.TrimSpace(repoNamesStr)
@@ -53,7 +69,7 @@ func getFilesBindings() ([]string, error) {
 	// get the raw list from env
 	filesBindingsStr := os.Getenv("FILES_BINDINGS")
 	if filesBindingsStr == "" {
-		return nil, fmt.Errorf("FILES_BINDINGS is not empty but required")
+		return nil, fmt.Errorf("FILES_BINDINGS is empty but required")
 	}
 	// trim spaces
 	filesBindingsStr = strings.TrimSpace(filesBindingsStr)
@@ -75,20 +91,43 @@ func getDryRun() (bool, error) {
 func getGithubToken() (string, error) {
 	githubToken := os.Getenv("GITHUB_TOKEN")
 	if githubToken == "" {
-		return "", fmt.Errorf("GITHUB_TOKEN is not empty but required")
+		return "", fmt.Errorf("GITHUB_TOKEN is empty but required")
 	}
 	return githubToken, nil
 }
 
+func getGithubURL() (string, error) {
+	githubURL := os.Getenv("GITHUB_URL")
+	if githubURL == "" {
+		return "", fmt.Errorf("GITHUB_URL is empty but required")
+	}
+	return githubURL, nil
+}
+
 func getCommitMessage() (string, error) {
 	commitMessage := os.Getenv("COMMIT_MESSAGE")
-	// default value
 	if commitMessage == "" {
-		return "", fmt.Errorf("FILES_BINDINGS is not empty but required")
+		return "", fmt.Errorf("COMMIT_MESSAGE is empty but required")
 	}
 	// auto-truncate commit message - 80 characters maximum
 	if len(commitMessage) > 80 {
 		commitMessage = commitMessage[80:]
 	}
 	return commitMessage, nil
+}
+
+func getFileSyncBranchRegexp() (string, error) {
+	fileSyncBranchRegexp := os.Getenv("FILE_SYNC_BRANCH_REGEXP")
+	if fileSyncBranchRegexp == "" {
+		return "", fmt.Errorf("FILE_SYNC_BRANCH_REGEXP is empty but required")
+	}
+	return fileSyncBranchRegexp, nil
+}
+
+func getWorkspace() (string, error) {
+	workspace := os.Getenv("WORKSPACE")
+	if workspace == "" {
+		return "", fmt.Errorf("WORKSPACE is empty but required")
+	}
+	return workspace, nil
 }

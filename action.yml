@@ -8,21 +8,21 @@ inputs:
   FILES_BINDINGS:
     description: "Line-separated list of files bindings that should be trigger updates"
     required: true
-  DRY_RUN:
-    description: "Dry run switch: set to false to create for real pull requests"
-    default: 'true'
   GITHUB_TOKEN:
     description: "Line-separated list of files bindings that should be trigger updates"
     required: true
+  DRY_RUN:
+    description: "Dry run switch: set to false to create for real pull requests"
+    default: 'true'
   COMMIT_MESSAGE:
     description: "Line-separated list of files bindings that should be trigger updates"
     default: "sync from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"
-  who:
-    default: world
-    description: "Say hello to who"
-    required: false
 runs:
   using: docker
   image: ./git-file-sync/Dockerfile
-  args:
-  - "-who=${{ inputs.who }}"
+  env:
+    REPOSITORIES: ${{ inputs.REPOSITORIES }}
+    FILES_BINDINGS: ${{ inputs.FILES_BINDINGS }}
+    GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+    DRY_RUN: ${{ inputs.DRY_RUN }}
+    COMMIT_MESSAGE: ${{ inputs.COMMIT_MESSAGE }}

@@ -1,3 +1,4 @@
+# build stage
 FROM golang:1.19 as builder
 LABEL maintainer="github.com/SlevinWasAlreadyTaken"
 
@@ -13,9 +14,12 @@ COPY . .
 
 RUN go build -o /bin/git-file-sync
 
-FROM scratch
+# run stage - minimalist final image
+FROM alpine:3.17
 
 # get binary from build image
 COPY --from=builder /bin/git-file-sync /bin/git-file-sync
+
+RUN ls -l /bin
 
 ENTRYPOINT ["/bin/git-file-sync"]

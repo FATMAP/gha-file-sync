@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"git-file-sync/github"
+	"git-file-sync/internal/github"
 )
 
 func main() {

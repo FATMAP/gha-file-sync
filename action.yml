@@ -28,7 +28,7 @@ inputs:
     default: "/tmp"
 runs:
   using: docker
-  image: ./git-file-sync/Dockerfile
+  image: Dockerfile
   env:
     REPOSITORIES: ${{ inputs.REPOSITORIES }}
     FILES_BINDINGS: ${{ inputs.FILES_BINDINGS }}

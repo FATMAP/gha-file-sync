@@ -1,6 +1,6 @@
 # gha-file-sync
-Github Action for Cross-Repos File Synchronisation using Pull Requests
 
+Github Action for Cross-Repos File Synchronisation using Pull Requests
 
 ## Features
 

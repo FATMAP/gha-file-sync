@@ -25,7 +25,7 @@ func main() {
 }
 
 func syncRepository(ctx context.Context, c Config, repoName string) error {
-	log.Printf("Syncing %s...", repoName)
+	log.Printf("> syncing %s...", repoName)
 
 	rm := github.NewRepoManager(repoName, c.Workspace, c.GithubURL, c.GithubToken, c.FileSyncBranchRegexp)
 

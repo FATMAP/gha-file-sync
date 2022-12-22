@@ -36,4 +36,5 @@ runs:
     GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
     GITHUB_URL: ${{ inputs.GITHUB_URL }}
     COMMIT_MESSAGE: ${{ inputs.COMMIT_MESSAGE }}
+    FILE_SYNC_BRANCH_REGEXP: ${{ inputs.FILE_SYNC_BRANCH_REGEXP }}
     WORKSPACE: ${{ inputs.WORKSPACE }}

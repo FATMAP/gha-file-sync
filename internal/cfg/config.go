@@ -57,8 +57,8 @@ func (c Config) Print() {
 		log.Printf("\t%s\n", rn)
 	}
 	log.Println("Files bindings:")
-	for _, rn := range c.FilesBindings {
-		log.Printf("\t%s\n", rn)
+	for src, dest := range c.FilesBindings {
+		log.Printf("\t%s -> %s\n", src, dest)
 	}
 	log.Println("Dry Run:", c.IsDryRun)
 	log.Println("Is GitHub token empty?", (len(c.GithubToken) == 0))
@@ -78,6 +78,12 @@ func getRepositoryNames() ([]string, error) {
 	repoNamesStr = strings.TrimSpace(repoNamesStr)
 	// split by \n
 	repoNames := strings.Split(repoNamesStr, "\n")
+
+	for _, name := range repoNames {
+		if len(strings.Split(name, "/")) != 2 {
+			return nil, fmt.Errorf("invalid repo name: %s {OWNER}/{NAME} expected", name)
+		}
+	}
 	return repoNames, nil
 }
 
@@ -93,14 +99,18 @@ func getFilesBindings() (map[string]string, error) {
 	fileBindingsList := strings.Split(filesBindingsStr, "\n")
 
 	filesBindings := make(map[string]string, len(fileBindingsList))
-
-	// split each binding by = to build the map
+	// split each binding by `=` to build the binding map
 	for _, fileBindingStr := range fileBindingsList {
 		split := strings.Split(fileBindingStr, "=")
 		if len(split) != 2 {
 			return nil, fmt.Errorf("incorrect binding: %s", fileBindingStr)
 		}
 		filesBindings[split[0]] = split[1]
+	}
+
+	// error if no files bindings have been found
+	if len(filesBindings) == 0 {
+		return nil, fmt.Errorf("no valid files bindings found")
 	}
 	return filesBindings, nil
 }

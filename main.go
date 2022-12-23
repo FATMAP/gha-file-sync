@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"git-file-sync/internal/cfg"
 	"git-file-sync/internal/github"
@@ -22,23 +23,38 @@ func main() {
 
 	log.Println("~")
 	log.Println("Let's sync!")
+
+	// init github client
+	ghClient, err := github.NewClient(ctx, c.GithubToken)
+	if err != nil {
+		log.Fatalf("initing github client: %v", err)
+	}
+
 	for _, repoName := range c.RepositoryNames {
-		if err := syncRepository(ctx, c, repoName); err != nil {
+		if err := syncRepository(ctx, c, ghClient, repoName); err != nil {
 			log.Printf("syncing %s: %v", repoName, err)
 		}
 	}
 }
 
-func syncRepository(ctx context.Context, c cfg.Config, repoName string) error {
-	log.Printf("> syncing %s...", repoName)
+func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, repoFullname string) error {
+	log.Printf("> syncing %s...", repoFullname)
 
-	rm := github.NewRepoManager(repoName, c.Workspace, c.GithubURL, c.GithubToken, c.FileSyncBranchRegexp)
+	repoFullnameSplit := strings.Split(repoFullname, "/")
+	owner := repoFullnameSplit[0]
+	repoName := repoFullnameSplit[1]
+
+	rm := github.NewRepoManager(
+		repoName, owner, c.Workspace, c.GithubURL, c.GithubToken, c.FileSyncBranchRegexp,
+		ghClient,
+		c.FilesBindings,
+	)
 
 	// ensure we clean data at the end of the sync
 	defer func() {
-		err := rm.CleanAll()
+		err := rm.CleanAll(ctx)
 		if err != nil {
-			log.Printf("ERROR: cleaning %s: %v", rm.RepoName, err)
+			log.Printf("ERROR: cleaning %s: %s", repoFullname, err)
 		}
 	}()
 
@@ -48,25 +64,25 @@ func syncRepository(ctx context.Context, c cfg.Config, repoName string) error {
 		return fmt.Errorf("cloning: %v", err)
 	}
 
-	// set the final branch to compare with - could be an existing file-sync pull request or the main branch
-	err = rm.PickBranchToCompare()
+	// set the head branch to compare - to see if something has changed
+	err = rm.SetHeadBranch(ctx)
 	if err != nil {
 		return fmt.Errorf("picking branch to compare: %v", err)
 	}
 
-	// show the diff
-	diff, err := rm.GetDiff()
+	// check if status reports changes
+	hasChanged, err := rm.HasChangedAfterCopy(ctx)
 	if err != nil {
-		return fmt.Errorf("creating diff: %v", err)
+		return fmt.Errorf("has changed: %v", err)
 	}
 
-	if diff == "" {
-		log.Println("diff detected!")
-		log.Println(diff)
+	if hasChanged {
+		log.Println("-> it has changed!")
+		log.Println(hasChanged)
 		if c.IsDryRun {
 			log.Println("-> dry run: nothing pushed for real.")
 		} else {
-			if err := rm.CreateOrUpdateFileSyncPR(); err != nil {
+			if err := rm.CreateOrUpdateFileSyncPR(ctx); err != nil {
 				return fmt.Errorf("creating or updating file sync pr: %v", err)
 				// no continue - we try to clean anyway: next step
 			}

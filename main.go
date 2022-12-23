@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"log"
 
+	"git-file-sync/internal/cfg"
 	"git-file-sync/internal/github"
 )
 
 func main() {
 	ctx := context.Background()
 
-	c, err := initConfig()
+	log.Println("~")
+	log.Println("Configuring...")
+	c, err := cfg.InitConfig()
 	if err != nil {
 		log.Fatalf("initing config: %v", err)
 	}
-	fmt.Printf("Configuration:\n %+v", c)
+	c.Print()
 
+	log.Println("~")
+	log.Println("Let's sync!")
 	for _, repoName := range c.RepositoryNames {
 		if err := syncRepository(ctx, c, repoName); err != nil {
 			log.Printf("syncing %s: %v", repoName, err)
@@ -24,7 +29,7 @@ func main() {
 	}
 }
 
-func syncRepository(ctx context.Context, c Config, repoName string) error {
+func syncRepository(ctx context.Context, c cfg.Config, repoName string) error {
 	log.Printf("> syncing %s...", repoName)
 
 	rm := github.NewRepoManager(repoName, c.Workspace, c.GithubURL, c.GithubToken, c.FileSyncBranchRegexp)
@@ -50,17 +55,24 @@ func syncRepository(ctx context.Context, c Config, repoName string) error {
 	}
 
 	// show the diff
-	hasDiffered, err := rm.HasDiffered()
+	diff, err := rm.GetDiff()
 	if err != nil {
 		return fmt.Errorf("creating diff: %v", err)
 	}
 
-	if hasDiffered && !c.IsDryRun {
-		// TODO: create or update the pull request if something has change
-		if err := rm.CreateOrUpdateFileSyncPR(); err != nil {
-			return fmt.Errorf("creating or updating file sync pr: %v", err)
-			// no continue - we try to clean anyway: next step
+	if diff == "" {
+		log.Println("diff detected!")
+		log.Println(diff)
+		if c.IsDryRun {
+			log.Println("-> dry run: nothing pushed for real.")
+		} else {
+			if err := rm.CreateOrUpdateFileSyncPR(); err != nil {
+				return fmt.Errorf("creating or updating file sync pr: %v", err)
+				// no continue - we try to clean anyway: next step
+			}
 		}
+	} else {
+		log.Println("-> nothing has changed.")
 	}
 	return nil
 }

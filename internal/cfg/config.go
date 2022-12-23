@@ -1,4 +1,4 @@
-package main
+package cfg
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	RepositoryNames []string
-	FilesBindings   []string
+	FilesBindings   map[string]string
 
 	IsDryRun bool
 
@@ -23,7 +23,7 @@ type Config struct {
 	Workspace string
 }
 
-func initConfig() (c Config, err error) {
+func InitConfig() (c Config, err error) {
 	if c.RepositoryNames, err = getRepositoryNames(); err != nil {
 		return c, err
 	}
@@ -51,9 +51,25 @@ func initConfig() (c Config, err error) {
 	return c, nil
 }
 
+func (c Config) Print() {
+	log.Println("Repositories names:")
+	for _, rn := range c.RepositoryNames {
+		log.Printf("\t%s\n", rn)
+	}
+	log.Println("Files bindings:")
+	for _, rn := range c.FilesBindings {
+		log.Printf("\t%s\n", rn)
+	}
+	log.Println("Dry Run:", c.IsDryRun)
+	log.Println("Is GitHub token empty?", (len(c.GithubToken) == 0))
+	log.Println("Github host URL:", c.GithubURL)
+	log.Println("Commit message:", c.CommitMessage)
+	log.Println("File sync branch regexp:", c.FileSyncBranchRegexp)
+	log.Println("Workspace:", c.Workspace)
+}
+
 func getRepositoryNames() ([]string, error) {
 	// get the raw list from env
-	fmt.Println("repos:", os.Getenv("REPOSITORIES"))
 	repoNamesStr := os.Getenv("REPOSITORIES")
 	if repoNamesStr == "" {
 		return nil, fmt.Errorf("REPOSITORIES is empty but required")
@@ -65,7 +81,7 @@ func getRepositoryNames() ([]string, error) {
 	return repoNames, nil
 }
 
-func getFilesBindings() ([]string, error) {
+func getFilesBindings() (map[string]string, error) {
 	// get the raw list from env
 	filesBindingsStr := os.Getenv("FILES_BINDINGS")
 	if filesBindingsStr == "" {
@@ -74,8 +90,19 @@ func getFilesBindings() ([]string, error) {
 	// trim spaces
 	filesBindingsStr = strings.TrimSpace(filesBindingsStr)
 	// split by \n
-	fileBindings := strings.Split(filesBindingsStr, "\n")
-	return fileBindings, nil
+	fileBindingsList := strings.Split(filesBindingsStr, "\n")
+
+	filesBindings := make(map[string]string, len(fileBindingsList))
+
+	// split each binding by = to build the map
+	for _, fileBindingStr := range fileBindingsList {
+		split := strings.Split(fileBindingStr, "=")
+		if len(split) != 2 {
+			return nil, fmt.Errorf("incorrect binding: %s", fileBindingStr)
+		}
+		filesBindings[split[0]] = split[1]
+	}
+	return filesBindings, nil
 }
 
 func getDryRun() (bool, error) {

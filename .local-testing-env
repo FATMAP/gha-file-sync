@@ -4,7 +4,7 @@ REPOSITORIES=FATMAP/k8s-demo-app
 FILES_BINDINGS=./README.md=./file-sync-testing/README.md
 DRY_RUN=true
 GITHUB_URL=github.com
-COMMIT_MESSAGE="sync-file-pr from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"
+COMMIT_MESSAGE="sync-file-pr from local"
 FILE_SYNC_BRANCH_REGEXP="[0-9]{4}-[0-9]{2}-[0-9]{2}-sync-file-pr.*"
 WORKSPACE=/tmp
 

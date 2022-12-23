@@ -1,6 +1,6 @@
 #!make
 
-include .env
+include .local-testing-env
 .EXPORT_ALL_VARIABLES:
 
 MAKEFLAGS += \

@@ -44,10 +44,10 @@ func (rm *RepoManager) buildRepoURL() string {
 func (rm *RepoManager) Clone(ctx context.Context) error {
 	authorizedRepoURL := rm.buildRepoURL()
 
-	r, err := git.PlainCloneContext(ctx, rm.localPath, false, &git.CloneOptions{
-		URL:      authorizedRepoURL,
-		Progress: os.Stdout,
-	})
+	r, err := git.PlainCloneContext(
+		ctx, rm.localPath, false,
+		&git.CloneOptions{URL: authorizedRepoURL},
+	)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,6 @@ func (rm *RepoManager) GetDiff() (string, error) {
 	// Files Bindings Logic
 	// 1. copy from github-file-sync to local_path the files according to FILES_BINDINGS
 	// where I am able to find the file of github-file-sync
-
 	fmt.Println("---------------------------------")
 	fmt.Println(rm.branchToCompareWith.Name)
 

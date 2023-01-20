@@ -87,13 +87,13 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	if hasChanged {
 		log.Info().Msg("-> it has changed!")
 		log.Info().Bool("hasChanged", hasChanged)
-		if c.IsDryRun {
-			log.Info().Msg("-> dry run: nothing pushed for real.")
-		} else {
-			if err := rm.UpdateRemote(ctx, c.CommitMessage); err != nil {
-				return fmt.Errorf("creating or updating file sync pr: %v", err)
-			}
+		// if c.IsDryRun {
+		// log.Info().Msg("-> dry run: nothing pushed for real.")
+		// } else {
+		if err := rm.UpdateRemote(ctx, c.CommitMessage); err != nil {
+			return fmt.Errorf("creating or updating file sync pr: %v", err)
 		}
+		// }
 	} else {
 		log.Info().Msg("-> nothing has changed.")
 	}

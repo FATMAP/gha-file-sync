@@ -40,7 +40,15 @@ func (c Client) GetBranchNamesFromPRs(ctx context.Context, owner, repoName strin
 }
 
 func (c Client) CreatePR(ctx context.Context, owner, repoName string) error {
-	pr := &github.NewPullRequest{}
-	_, _, err := c.PullRequests.Create(ctx, owner, repoName, pr)
-	return err
+	// pr := &github.NewPullRequest{
+	// 	Title               *string `json:"title,omitempty"`
+	// 	Head                *string `json:"head,omitempty"`
+	// 	Base                *string `json:"base,omitempty"`
+	// 	Body                *string `json:"body,omitempty"`
+	// 	Issue               *int    `json:"issue,omitempty"`
+	// 	MaintainerCanModify *bool   `json:"maintainer_can_modify,omitempty"
+	// }
+	// _, _, err := c.PullRequests.Create(ctx, owner, repoName, pr)
+	// return err
+	return nil
 }

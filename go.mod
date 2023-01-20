@@ -7,6 +7,7 @@ require (
 	github.com/go-git/go-git/v5 v5.5.1
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/otiai10/copy v1.9.0
+	github.com/rs/zerolog v1.28.0
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 )
 
@@ -23,6 +24,8 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
+	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/pjbgf/sha1cd v0.2.3 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/skeema/knownhosts v1.1.0 // indirect

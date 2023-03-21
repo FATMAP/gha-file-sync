@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -39,16 +40,21 @@ func (c Client) GetBranchNamesFromPRs(ctx context.Context, owner, repoName strin
 	return branchNames, nil
 }
 
-func (c Client) CreatePR(ctx context.Context, owner, repoName string) error {
-	// pr := &github.NewPullRequest{
-	// 	Title               *string `json:"title,omitempty"`
-	// 	Head                *string `json:"head,omitempty"`
-	// 	Base                *string `json:"base,omitempty"`
-	// 	Body                *string `json:"body,omitempty"`
-	// 	Issue               *int    `json:"issue,omitempty"`
-	// 	MaintainerCanModify *bool   `json:"maintainer_can_modify,omitempty"
-	// }
-	// _, _, err := c.PullRequests.Create(ctx, owner, repoName, pr)
-	// return err
+func (c Client) CreateOrUpdatePR(ctx context.Context, repoName, baseBranch, prTitle string, createPRMode bool) error {
+	desc := "this is the desc"
+	if createPRMode {
+		canBeModified := true
+		pr := &github.NewPullRequest{
+			Title:               &prTitle,
+			Base:                &baseBranch,
+			Body:                &desc,
+			MaintainerCanModify: &canBeModified,
+		}
+		repoSplit := strings.Split(repoName, "/")
+		_, _, err := c.PullRequests.Create(ctx, repoSplit[0], repoSplit[1], pr)
+		return err
+	} else {
+		fmt.Printf("Update MODE: WHAT SHOULD I DO BUDDY?")
+	}
 	return nil
 }

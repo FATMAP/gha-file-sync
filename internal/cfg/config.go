@@ -19,6 +19,7 @@ type Config struct {
 	GithubURL   string
 
 	CommitMessage        string
+	PRTitle              string
 	FileSyncBranchRegexp string
 
 	Workspace string
@@ -41,6 +42,9 @@ func InitConfig() (c Config, err error) {
 		return c, err
 	}
 	if c.CommitMessage, err = getCommitMessage(); err != nil {
+		return c, err
+	}
+	if c.PRTitle, err = getPRTitle(); err != nil {
 		return c, err
 	}
 	if c.FileSyncBranchRegexp, err = getFileSyncBranchRegexp(); err != nil {
@@ -142,17 +146,27 @@ func getGithubURL() (string, error) {
 	return githubURL, nil
 }
 
+func getPRTitle() (string, error) {
+	prTitle := os.Getenv("PR_TITLE")
+	if prTitle == "" {
+		return "", fmt.Errorf("PR_TITLE is empty but required")
+	}
+	// auto-truncate pr title - 80 characters maximum
+	if len(prTitle) > 80 {
+		prTitle = prTitle[:79]
+	}
+	return prTitle, nil
+}
+
 func getCommitMessage() (string, error) {
 	commitMessage := os.Getenv("COMMIT_MESSAGE")
 	if commitMessage == "" {
 		return "", fmt.Errorf("COMMIT_MESSAGE is empty but required")
 	}
-	log.Infof("raw commit message: %s", commitMessage)
 	// auto-truncate commit message - 120 characters maximum
 	if len(commitMessage) > 120 {
 		commitMessage = commitMessage[:119]
 	}
-	log.Infof("final commit message: %s", commitMessage)
 	return commitMessage, nil
 }
 

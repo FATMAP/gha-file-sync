@@ -161,7 +161,7 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	return (len(statuses) > 0), nil
 }
 
-func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg string) error {
+func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle string) error {
 	// move to the repository
 	if err := os.Chdir(rm.localPath); err != nil {
 		return fmt.Errorf("moving to local path: %v", err)
@@ -211,7 +211,10 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg string) error
 		return fmt.Errorf("pushing: %v", err)
 	}
 
-	// TODO: open or update PR
+	err = rm.ghClient.CreateOrUpdatePR(ctx, rm.repoName, rm.baseBranch, prTitle, rm.createPRMode)
+	if err != nil {
+		return fmt.Errorf("creating/updating PR: %v", err)
+	}
 	return nil
 }
 

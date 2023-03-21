@@ -18,8 +18,11 @@ inputs:
     description: "The domain of the Github instance hosting your repository"
     default: "github.com"
   COMMIT_MESSAGE:
-    description: "Line-separated list of files bindings that should be trigger updates"
+    description: "Commit message"
     default: "sync-file-pr from https://github.com/FATMAP/github-file-sync/releases/tag/${{ github.ref_name }}"
+  PR_TITLE:
+    description: "The title of the sync PR"
+    default: "minor FEAT gha-file-sync from ${{ github.ref_name }}"
   FILE_SYNC_BRANCH_REGEXP:
     description: "Regexp string used to determine if an existing file sync pull request already exists. Update it if found instead of creating a new one."
     default: "[0-9]{4}-[0-9]{2}-[0-9]{2}-sync-file-pr.*"
@@ -36,5 +39,6 @@ runs:
     GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
     GITHUB_URL: ${{ inputs.GITHUB_URL }}
     COMMIT_MESSAGE: ${{ inputs.COMMIT_MESSAGE }}
+    PR_TITLE: ${{ inputs.PR_TITLE }}
     FILE_SYNC_BRANCH_REGEXP: ${{ inputs.FILE_SYNC_BRANCH_REGEXP }}
     WORKSPACE: ${{ inputs.WORKSPACE }}

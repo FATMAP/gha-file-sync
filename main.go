@@ -88,7 +88,7 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 		// if c.IsDryRun {
 		// log.Infof().Msg("-> dry run: nothing pushed for real.")
 		// } else {
-		if err := rm.UpdateRemote(ctx, c.CommitMessage); err != nil {
+		if err := rm.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
 			return fmt.Errorf("creating or updating file sync pr: %v", err)
 		}
 		// }

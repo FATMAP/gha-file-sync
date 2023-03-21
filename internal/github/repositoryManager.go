@@ -103,6 +103,9 @@ func (rm *RepoManager) PickBaseBranch(ctx context.Context) error {
 			alreadyFound = true
 		}
 	}
+	log.Infof("final base branch is %s", rm.baseBranch)
+	log.Infof("candidates: %v", branchNames)
+	log.Infof("found? %v", alreadyFound)
 	return nil
 }
 

@@ -148,9 +148,9 @@ func getCommitMessage() (string, error) {
 		return "", fmt.Errorf("COMMIT_MESSAGE is empty but required")
 	}
 	log.Infof("raw commit message: %s", commitMessage)
-	// auto-truncate commit message - 80 characters maximum
-	if len(commitMessage) > 80 {
-		commitMessage = commitMessage[80:]
+	// auto-truncate commit message - 120 characters maximum
+	if len(commitMessage) > 120 {
+		commitMessage = commitMessage[:119]
 	}
 	log.Infof("final commit message: %s", commitMessage)
 	return commitMessage, nil

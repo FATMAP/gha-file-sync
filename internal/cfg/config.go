@@ -2,10 +2,11 @@ package cfg
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"git-file-sync/internal/log"
 )
 
 type Config struct {
@@ -52,20 +53,20 @@ func InitConfig() (c Config, err error) {
 }
 
 func (c Config) Print() {
-	log.Println("Repositories names:")
+	log.Infof("Repositories names:")
 	for _, rn := range c.RepositoryNames {
-		log.Printf("\t%s\n", rn)
+		log.Infof("\t%s", rn)
 	}
-	log.Println("Files bindings:")
+	log.Infof("Files bindings:")
 	for src, dest := range c.FilesBindings {
-		log.Printf("\t%s -> %s\n", src, dest)
+		log.Infof("\t%s -> %s", src, dest)
 	}
-	log.Println("Dry Run:", c.IsDryRun)
-	log.Println("Is GitHub token empty?", (len(c.GithubToken) == 0))
-	log.Println("Github host URL:", c.GithubURL)
-	log.Println("Commit message:", c.CommitMessage)
-	log.Println("File sync branch regexp:", c.FileSyncBranchRegexp)
-	log.Println("Workspace:", c.Workspace)
+	log.Infof("Dry Run: %v", c.IsDryRun)
+	log.Infof("Is GitHub token empty? %v", (len(c.GithubToken) == 0))
+	log.Infof("Github host URL: %v", c.GithubURL)
+	log.Infof("Commit message: %v", c.CommitMessage)
+	log.Infof("File sync branch regexp: %v", c.FileSyncBranchRegexp)
+	log.Infof("Workspace: %v", c.Workspace)
 }
 
 func getRepositoryNames() ([]string, error) {
@@ -119,7 +120,7 @@ func getDryRun() (bool, error) {
 	isDryRunStr := os.Getenv("DRY_RUN")
 	// default is true
 	if isDryRunStr == "" {
-		log.Printf("DRY_RUN empty: set to default value")
+		log.Infof("DRY_RUN empty: set to default value")
 		return true, nil
 	}
 	return strconv.ParseBool(isDryRunStr)
@@ -146,12 +147,12 @@ func getCommitMessage() (string, error) {
 	if commitMessage == "" {
 		return "", fmt.Errorf("COMMIT_MESSAGE is empty but required")
 	}
-	log.Println("raw:", commitMessage)
+	log.Infof("raw commit message: %s", commitMessage)
 	// auto-truncate commit message - 80 characters maximum
 	if len(commitMessage) > 80 {
 		commitMessage = commitMessage[80:]
 	}
-	log.Println("after:", commitMessage)
+	log.Infof("final commit message: %s", commitMessage)
 	return commitMessage, nil
 }
 

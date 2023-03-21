@@ -3,50 +3,49 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
 	"git-file-sync/internal/cfg"
 	"git-file-sync/internal/github"
+	"git-file-sync/internal/log"
 )
 
 func main() {
 	ctx := context.Background()
 
 	// init of logger
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Init()
 
 	// init of config
-	log.Print("~")
-	log.Print("Configuring...")
+	log.Infof("Configuring...")
 	c, err := cfg.InitConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("initing config")
+		log.Errorf("initing config: %v", err)
+		os.Exit(1)
 	}
 	c.Print()
 
 	// init of github client
 	ghClient, err := github.NewClient(ctx, c.GithubToken)
 	if err != nil {
-		log.Fatal().Err(err).Msg("initing github client")
+		log.Errorf("initing github client: %v", err)
+		os.Exit(1)
 	}
 
 	// start
-	log.Print("~")
-	log.Print("Let's sync!")
+	log.Infof("Let's sync!")
 	for _, repoName := range c.RepositoryNames {
 		// TODO: make it async?
 		if err := syncRepository(ctx, c, ghClient, repoName); err != nil {
-			log.Error().Err(err).Msgf("syncing %s", repoName)
+			log.Errorf("syncing %s: %v", repoName, err)
 		}
 	}
-	log.Print("Sync finished.")
+	log.Infof("Sync finished.")
 }
 
 func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, repoFullname string) error {
-	log.Info().Msgf("> syncing %s...", repoFullname)
+	log.Infof("> syncing %s...", repoFullname)
 
 	repoFullnameSplit := strings.Split(repoFullname, "/")
 	owner := repoFullnameSplit[0]
@@ -62,7 +61,7 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	defer func() {
 		err := rm.CleanAll(ctx)
 		if err != nil {
-			log.Error().Err(err).Msgf("cleaning %s", repoFullname)
+			log.Errorf("cleaning %s: %v", repoFullname, err)
 		}
 	}()
 
@@ -85,17 +84,16 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	}
 
 	if hasChanged {
-		log.Info().Msg("-> it has changed!")
-		log.Info().Bool("hasChanged", hasChanged)
+		log.Infof("-> it has changed!")
 		// if c.IsDryRun {
-		// log.Info().Msg("-> dry run: nothing pushed for real.")
+		// log.Infof().Msg("-> dry run: nothing pushed for real.")
 		// } else {
 		if err := rm.UpdateRemote(ctx, c.CommitMessage); err != nil {
 			return fmt.Errorf("creating or updating file sync pr: %v", err)
 		}
 		// }
 	} else {
-		log.Info().Msg("-> nothing has changed.")
+		log.Infof("-> nothing has changed.")
 	}
 	return nil
 }

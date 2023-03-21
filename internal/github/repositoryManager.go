@@ -8,10 +8,11 @@ import (
 	"regexp"
 	"time"
 
+	"git-file-sync/internal/log"
+
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	cp "github.com/otiai10/copy"
-	"github.com/rs/zerolog/log"
 )
 
 type RepoManager struct {
@@ -89,10 +90,11 @@ func (rm *RepoManager) PickBaseBranch(ctx context.Context) error {
 	// try to find an existing file sync PR
 	alreadyFound := false
 	for _, name := range branchNames {
+		log.Infof("branch name: %s", name)
 		// use branch name to see if it is an file sync PR
 		if rm.fileSyncBranchRegexp.MatchString(name) {
 			if alreadyFound {
-				log.Warn().Msgf("it seems there are two existing file sync pull request on repo %s", rm.repoName)
+				log.Warnf("it seems there are two existing file sync pull request on repo %s", rm.repoName)
 				// TODO: take the latest one? close the oldest one?
 			}
 			rm.baseBranch = name
@@ -137,7 +139,7 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	atLeastOneSuccess := false
 	for src, dest := range rm.fileBindings {
 		if err := cp.Copy(src, path.Join(rm.localPath, dest)); err != nil {
-			log.Error().Err(err).Msgf("copying %s to %s", src, dest)
+			log.Errorf("copying %s to %s: %v", src, dest, err)
 			continue
 		}
 		atLeastOneSuccess = true

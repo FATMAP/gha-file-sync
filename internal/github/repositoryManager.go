@@ -48,7 +48,7 @@ func NewRepoManager(
 		ghToken:   githubToken,
 		ghClient:  ghClient,
 
-		baseBranch:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("1605-11-05")), // default branch
+		baseBranch:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
 		createPRMode: true,                                                            // by default, consider creating a new PR
 
 		fileBindings: fileBindings,

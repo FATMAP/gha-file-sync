@@ -27,6 +27,4 @@ RUN apk add libc6-compat
 # get binary from build image
 COPY --from=builder /bin/git-file-sync /bin/git-file-sync
 
-RUN ls -l /bin
-
 ENTRYPOINT ["/bin/git-file-sync"]

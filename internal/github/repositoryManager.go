@@ -12,6 +12,7 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	cp "github.com/otiai10/copy"
 )
 
@@ -189,6 +190,11 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg string) error
 	// commit changes
 	commitOpt := &git.CommitOptions{
 		All: true, // TODO: to test new added file
+		Author: &object.Signature{
+			Name:  "FATMAPRobot",
+			Email: "robots@fatmap.com",
+			When:  time.Now(),
+		},
 	}
 	if _, err := workTree.Commit(commitMsg, commitOpt); err != nil {
 		return fmt.Errorf("commiting: %v", err)

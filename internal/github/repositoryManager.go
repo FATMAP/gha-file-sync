@@ -48,8 +48,8 @@ func NewRepoManager(
 		ghToken:   githubToken,
 		ghClient:  ghClient,
 
-		baseBranch:   fmt.Sprintf("%d-%d-%d-sync-file-pr", time.Now().Year(), time.Now().Month(), time.Now().Day()), // default branch
-		createPRMode: true,                                                                                          // by default, consider creating a new PR
+		baseBranch:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("1605-11-05")), // default branch
+		createPRMode: true,                                                            // by default, consider creating a new PR
 
 		fileBindings: fileBindings,
 	}
@@ -175,7 +175,7 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg string) error
 		Keep: true, // keep actual changes
 
 		Branch: plumbing.ReferenceName(rm.baseBranch), // according to existing pr
-		Create: rm.createPRMode,                       // according to existing pr
+		Create: false,                                 // already created if necessary in HasChangedAfterCopy
 	})
 	if err != nil {
 		return fmt.Errorf("checking out: %v", err)

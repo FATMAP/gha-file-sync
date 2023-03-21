@@ -14,3 +14,9 @@ git-file-sync
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# env files
+.env
+
+# testing file
+sync-testing/

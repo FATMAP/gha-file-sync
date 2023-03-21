@@ -176,7 +176,7 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 		Keep: true, // keep actual changes
 
 		Branch: plumbing.ReferenceName(rm.baseBranch), // according to existing pr
-		Create: false,                                 // already created if necessary in HasChangedAfterCopy
+		Create: rm.createPRMode,                       // already created if necessary in HasChangedAfterCopy
 	})
 	if err != nil {
 		return fmt.Errorf("checking out: %v", err)

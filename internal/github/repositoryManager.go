@@ -11,8 +11,9 @@ import (
 	"git-file-sync/internal/log"
 
 	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	cp "github.com/otiai10/copy"
 )
 
@@ -27,9 +28,13 @@ type RepoManager struct {
 	ghToken   string
 	ghClient  Client
 
-	repository   *git.Repository
-	baseBranch   string
-	createPRMode bool
+	repo       *git.Repository
+	workTree   *git.Worktree
+	syncBranch string
+	syncRef    *plumbing.Reference
+	// existingPRNumber is used for PR update and also indicates if PR and branch should be created - no distinction between these two elements for now
+	// it is set based on PR first (if sync branch exists without, it is either ignored or results in an error)
+	existingPRNumber *int
 
 	fileBindings map[string]string
 }
@@ -49,8 +54,8 @@ func NewRepoManager(
 		ghToken:   githubToken,
 		ghClient:  ghClient,
 
-		baseBranch:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
-		createPRMode: true,                                                            // by default, consider creating a new PR
+		syncBranch:       fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
+		existingPRNumber: nil,                                                             // by default, consider creating a new PR
 
 		fileBindings: fileBindings,
 	}
@@ -59,54 +64,106 @@ func NewRepoManager(
 	return rm
 }
 
-func (rm *RepoManager) buildRepoURL() string {
-	return fmt.Sprintf("https://x-access-token:%s@%s/%s/%s.git", rm.ghToken, rm.ghHostURL, rm.owner, rm.repoName)
+func (rm *RepoManager) getRepoURL() string {
+	return fmt.Sprintf("https://%s/%s/%s.git", rm.ghHostURL, rm.owner, rm.repoName)
+}
+
+func (rm *RepoManager) getBasicAuth() *http.BasicAuth {
+	return &http.BasicAuth{Username: rm.ghToken, Password: "x-oauth-basic"}
 }
 
 func (rm *RepoManager) Clone(ctx context.Context) error {
-	authorizedRepoURL := rm.buildRepoURL()
-
+	fmt.Println("local path for repo is: ", rm.localPath)
+	os.RemoveAll(rm.localPath)
+	// TODO: remove 2 lines above
 	r, err := git.PlainCloneContext(
 		ctx, rm.localPath, false,
-		&git.CloneOptions{URL: authorizedRepoURL},
+		&git.CloneOptions{
+			URL:  rm.getRepoURL(),
+			Auth: rm.getBasicAuth(),
+		},
 	)
 	if err != nil {
 		return err
 	}
-	rm.repository = r
+	rm.repo = r
 	return nil
 }
 
-// PickBaseBranch on the repo manager structure which will be used to compare files
+// PicksyncBranch on the repo manager structure which will be used to compare files
 // could be:
 // - a new branch based on the repo's HEAD: probably main or master
 // - an existing file sync branch
-func (rm *RepoManager) PickBaseBranch(ctx context.Context) error {
+func (rm *RepoManager) PickSyncBranch(ctx context.Context) error {
 	// try to find an existing file sync branch by checking opened PRs
-	branchNames, err := rm.ghClient.GetBranchNamesFromPRs(ctx, rm.owner, rm.repoName)
+	branchNameByPRNumbers, err := rm.ghClient.GetBranchNameByPRNumbers(ctx, rm.owner, rm.repoName)
 	if err != nil {
 		return fmt.Errorf("getting branches: %v", err)
 	}
 
 	// try to find an existing file sync PR
 	alreadyFound := false
-	for _, name := range branchNames {
-		log.Infof("branch name: %s", name)
+	for prNumber, branchName := range branchNameByPRNumbers {
 		// use branch name to see if it is an file sync PR
-		if rm.fileSyncBranchRegexp.MatchString(name) {
+		if rm.fileSyncBranchRegexp.MatchString(branchName) {
 			if alreadyFound {
 				log.Warnf("it seems there are two existing file sync pull request on repo %s", rm.repoName)
 				// TODO: take the latest one? close the oldest one?
 			}
-			rm.baseBranch = name
-			rm.createPRMode = false
-
+			rm.syncBranch = branchName
+			rm.existingPRNumber = &prNumber
 			alreadyFound = true
 		}
 	}
-	log.Infof("final base branch is %s", rm.baseBranch)
-	log.Infof("candidates: %v", branchNames)
-	log.Infof("found? %v", alreadyFound)
+
+	// configure branch locally
+	if err := rm.setupLocalSyncBranch(); err != nil {
+		return fmt.Errorf("setting up sync branch locally: %v", err)
+	}
+	return nil
+}
+
+// setupLocalSyncBranch performs low level git operation to setup sync branc
+// it handles it either a remote branch already exist or if it should be created
+func (rm *RepoManager) setupLocalSyncBranch() error {
+	var err error
+	branchConfig := &config.Branch{
+		Name:   rm.syncBranch,
+		Rebase: "true",
+	}
+	// a. new branch mode: symbolic ref and branch merge ref are based on the current local head ref
+	// b. existing branch mode: symbolic ref and branch merge ref are based on the existing remote ref
+	if rm.existingPRNumber == nil { // a
+		headRef, err := rm.repo.Head()
+		if err != nil {
+			return fmt.Errorf("getting head: %v", err)
+		}
+		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranch), headRef.Name())
+		branchConfig.Merge = rm.syncRef.Name()
+	} else { // b
+		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranch), plumbing.NewRemoteReferenceName("origin", rm.syncBranch))
+		branchConfig.Merge = rm.syncRef.Name()
+		branchConfig.Remote = rm.syncBranch
+	}
+
+	// set the local storer reference
+	if err := rm.repo.Storer.SetReference(rm.syncRef); err != nil {
+		return fmt.Errorf("setting final ref: %v", err)
+	}
+	// init the work tree
+	rm.workTree, err = rm.repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("getting worktree: %v", err)
+	}
+	// create the branch reference locally - set the merge to the recently created ref
+	if err := rm.repo.CreateBranch(branchConfig); err != nil {
+		return fmt.Errorf("creating remote branch: %v", err)
+	}
+	// checkout the sync ref in the work tree
+	co := &git.CheckoutOptions{Branch: rm.syncRef.Name()}
+	if err := rm.workTree.Checkout(co); err != nil {
+		return fmt.Errorf("checkout %s: %v", rm.syncRef.String(), err)
+	}
 	return nil
 }
 
@@ -118,27 +175,12 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	// baseBranch should be set
-	if rm.baseBranch == "" {
-		return false, fmt.Errorf("baseBranch is not set")
+	// syncBranch and workTree should be set
+	if rm.syncBranch == "" || rm.workTree == nil {
+		return false, fmt.Errorf("syncBranch or workTree is not set")
 	}
 
-	// 1. checkout the base branch to compare
-	workTree, err := rm.repository.Worktree()
-	if err != nil {
-		return false, fmt.Errorf("getting worktree: %v", err)
-	}
-	err = workTree.Checkout(&git.CheckoutOptions{
-		Keep: true, // keep actual local changes
-
-		Branch: plumbing.ReferenceName(rm.baseBranch),
-		Create: rm.createPRMode,
-	})
-	if err != nil {
-		return false, fmt.Errorf("checking out: %v", err)
-	}
-
-	// 2. copy files from the current repository to the repo-to-sync local path
+	// 2. copy files from the current repo to the repo-to-sync local path
 	// according to configured bindings
 	atLeastOneSuccess := false
 	for src, dest := range rm.fileBindings {
@@ -153,72 +195,79 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	}
 
 	// 3. consider if files have changed / being created by running the git status command
-	statuses, err := workTree.Status()
+	statuses, err := rm.workTree.Status()
 	if err != nil {
 		return false, fmt.Errorf("getting status: %v", err)
 	}
+	fmt.Println(statuses)
 	// return true of status return a non empty result
 	return (len(statuses) > 0), nil
 }
 
 func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle string) error {
-	// move to the repository
+	// move to the repo
 	if err := os.Chdir(rm.localPath); err != nil {
 		return fmt.Errorf("moving to local path: %v", err)
 	}
 
-	// checkout the base branch to update
-	workTree, err := rm.repository.Worktree()
-	if err != nil {
-		return fmt.Errorf("getting worktree: %v", err)
-	}
-	err = workTree.Checkout(&git.CheckoutOptions{
-		Keep: true, // keep actual changes
-
-		Branch: plumbing.ReferenceName(rm.baseBranch), // according to existing pr
-		Create: false,                                 // already created if necessary in HasChangedAfterCopy
-	})
-	if err != nil {
-		return fmt.Errorf("checking out: %v", err)
-	}
+	rm.printStatus(ctx, "before add ----")
 
 	// add all files
-	if err := workTree.AddGlob("."); err != nil {
+	if err := rm.workTree.AddGlob("."); err != nil {
 		return fmt.Errorf("adding: %v", err)
 	}
+
+	rm.printStatus(ctx, "before commit ----")
 
 	// commit changes
 	commitOpt := &git.CommitOptions{
 		All: true, // TODO: to test new added file
-		Author: &object.Signature{
-			Name:  "FATMAPRobot",
-			Email: "robots@fatmap.com",
-			When:  time.Now(),
-		},
 	}
-	if _, err := workTree.Commit(commitMsg, commitOpt); err != nil {
+	if _, err := rm.workTree.Commit(commitMsg, commitOpt); err != nil {
 		return fmt.Errorf("commiting: %v", err)
 	}
 
 	// push to remote
 	pushOpt := &git.PushOptions{
-		RemoteName:     rm.baseBranch,
-		Force:          true,
-		ForceWithLease: &git.ForceWithLease{RefName: plumbing.ReferenceName(rm.baseBranch)},
-		// Atomic:         true,
+		RemoteName: "origin",
+		Auth:       rm.getBasicAuth(),
+		Force:      true,
+		Atomic:     true,
+		// ForceWithLease: &git.ForceWithLease{RefName: plumbing.ReferenceName(rm.syncBranch)},
 	}
-	if err := rm.repository.PushContext(ctx, pushOpt); err != nil {
+	if err := rm.repo.PushContext(ctx, pushOpt); err != nil {
 		return fmt.Errorf("pushing: %v", err)
 	}
 
-	err = rm.ghClient.CreateOrUpdatePR(ctx, rm.repoName, rm.baseBranch, prTitle, rm.createPRMode)
-	if err != nil {
+	if err := rm.ghClient.CreateOrUpdatePR(
+		ctx, rm.existingPRNumber,
+		rm.owner, rm.repoName,
+		"main", rm.syncBranch,
+		prTitle, commitMsg,
+	); err != nil {
 		return fmt.Errorf("creating/updating PR: %v", err)
 	}
 	return nil
 }
 
 func (rm *RepoManager) CleanAll(ctx context.Context) error {
-	// remove all local files
-	return os.RemoveAll(rm.localPath)
+	// remove the repository folder on local filesystem
+	// return os.RemoveAll(rm.localPath)
+	// TODO: uncomment remove of local path
+	return nil
+}
+
+// printStatus is only used for debug purpose
+func (rm *RepoManager) printStatus(_ context.Context, msg string) {
+	fmt.Println(msg)
+	statuses, err := rm.workTree.Status()
+	if err != nil {
+		log.Errorf("getting status: %v", err)
+	}
+	for k, v := range statuses {
+		fmt.Printf("\t%v: staging '%s' vs worktree '%s'\n", k, string(v.Staging), string(v.Worktree))
+	}
+	if len(statuses) == 0 {
+		fmt.Printf("\tno changes detected..")
+	}
 }

@@ -57,20 +57,25 @@ func InitConfig() (c Config, err error) {
 }
 
 func (c Config) Print() {
-	log.Infof("Repositories names:")
+	repoNamesStr := ""
 	for _, rn := range c.RepositoryNames {
-		log.Infof("\t%s", rn)
+		repoNamesStr = fmt.Sprintf("%s\t%s\n", repoNamesStr, rn)
 	}
-	log.Infof("Files bindings:")
+	fileBindingsStr := ""
 	for src, dest := range c.FilesBindings {
-		log.Infof("\t%s -> %s", src, dest)
+		fileBindingsStr = fmt.Sprintf("%s\t%s -> %s\n", fileBindingsStr, src, dest)
 	}
-	log.Infof("Dry Run: %v", c.IsDryRun)
-	log.Infof("Is GitHub token empty? %v", (len(c.GithubToken) == 0))
-	log.Infof("Github host URL: %v", c.GithubURL)
-	log.Infof("Commit message: %v", c.CommitMessage)
-	log.Infof("File sync branch regexp: %v", c.FileSyncBranchRegexp)
-	log.Infof("Workspace: %v", c.Workspace)
+	configStr := fmt.Sprintln(
+		"\tRepositories:\n\t", repoNamesStr,
+		"\tFiles bindings:\n\t", fileBindingsStr,
+		"\tDry Run:\n\t", c.IsDryRun,
+		"\n\tIs GitHub token set?\n\t", (len(c.GithubToken) != 0),
+		"\n\tGithub host URL:\n\t", c.GithubURL,
+		"\n\tCommit message:\n\t", c.CommitMessage,
+		"\n\tFile sync branch regexp:\n\t", c.FileSyncBranchRegexp,
+		"\n\tWorkspace:\n\t", c.Workspace,
+	)
+	fmt.Println(configStr)
 }
 
 func getRepositoryNames() ([]string, error) {

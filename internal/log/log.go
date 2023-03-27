@@ -48,7 +48,7 @@ func Warnf(format string, args ...any) {
 }
 
 func Init() {
-	replace := func(groups []string, a slog.Attr) slog.Attr {
+	removeTimeAndSourceDirectory := func(groups []string, a slog.Attr) slog.Attr {
 		// Remove time.
 		if a.Key == slog.TimeKey && len(groups) == 0 {
 			a.Key = ""
@@ -59,7 +59,7 @@ func Init() {
 		}
 		return a
 	}
-	logger := slog.New(slog.HandlerOptions{AddSource: true, ReplaceAttr: replace}.NewTextHandler(os.Stdout))
+	logger := slog.New(slog.HandlerOptions{ReplaceAttr: removeTimeAndSourceDirectory}.NewTextHandler(os.Stdout))
 	slog.SetDefault(logger)
-	Infof("logger init done")
+	Infof("Logger init...")
 }

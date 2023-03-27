@@ -18,7 +18,7 @@ func main() {
 	log.Init()
 
 	// init of config
-	log.Infof("Configuring...")
+	log.Infof("Configuration...")
 	c, err := cfg.InitConfig()
 	if err != nil {
 		log.Errorf("initing config: %v", err)
@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// start
-	log.Infof("Let's sync!")
+	log.Infof("Let's sync")
 	for _, repoName := range c.RepositoryNames {
 		// TODO: make it async?
 		if err := syncRepository(ctx, c, ghClient, repoName); err != nil {
@@ -45,7 +45,7 @@ func main() {
 }
 
 func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, repoFullname string) error {
-	log.Infof("> syncing %s...", repoFullname)
+	log.Infof("Syncing %s...", repoFullname)
 
 	repoFullnameSplit := strings.Split(repoFullname, "/")
 	owner := repoFullnameSplit[0]
@@ -71,8 +71,8 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 		return fmt.Errorf("cloning: %v", err)
 	}
 
-	// set the base branch to compare with to see if something has changed
-	err = rm.PickBaseBranch(ctx)
+	// set the final sync branch
+	err = rm.PickSyncBranch(ctx)
 	if err != nil {
 		return fmt.Errorf("picking base branch to compare: %v", err)
 	}

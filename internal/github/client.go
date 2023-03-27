@@ -3,7 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
-	"strings"
+	"git-file-sync/internal/log"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -22,7 +22,7 @@ func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	return Client{c}, nil
 }
 
-func (c Client) GetBranchNamesFromPRs(ctx context.Context, owner, repoName string) ([]string, error) {
+func (c Client) GetBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
 	opt := &github.PullRequestListOptions{State: "open"}
 
 	// TODO: check if pagination is mandatory to implement day 1
@@ -31,30 +31,46 @@ func (c Client) GetBranchNamesFromPRs(ctx context.Context, owner, repoName strin
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
 
-	branchNames := []string{}
+	branchNameByPRNumbers := make(map[int]string, len(prs))
 	for _, pr := range prs {
-		if pr.Head.Ref != nil {
-			branchNames = append(branchNames, *pr.Head.Ref)
+		if pr.Head.Ref != nil && pr.Number != nil {
+			branchNameByPRNumbers[*pr.Number] = *pr.Head.Ref
 		}
 	}
-	return branchNames, nil
+	return branchNameByPRNumbers, nil
 }
 
-func (c Client) CreateOrUpdatePR(ctx context.Context, repoName, baseBranch, prTitle string, createPRMode bool) error {
-	desc := "this is the desc"
-	if createPRMode {
+func (c Client) CreateOrUpdatePR(
+	ctx context.Context, existingPRNumber *int,
+	owner, repoName,
+	baseBranch, syncBranch,
+	title, desc string,
+) error {
+	var prURL string
+	if existingPRNumber == nil { // create mode
 		canBeModified := true
 		pr := &github.NewPullRequest{
-			Title:               &prTitle,
+			Title:               &title,
 			Base:                &baseBranch,
+			Head:                &syncBranch,
 			Body:                &desc,
 			MaintainerCanModify: &canBeModified,
 		}
-		repoSplit := strings.Split(repoName, "/")
-		_, _, err := c.PullRequests.Create(ctx, repoSplit[0], repoSplit[1], pr)
-		return err
-	} else {
-		fmt.Printf("Update MODE: WHAT SHOULD I DO BUDDY?")
+		createdPR, _, err := c.Client.PullRequests.Create(ctx, owner, repoName, pr)
+		if err != nil {
+			return fmt.Errorf("creating PR: %v", err)
+		}
+		prURL = *createdPR.HTMLURL
+	} else { // update mode = create a comment with the given desc
+		fmt.Println(*existingPRNumber)
+		prComment, _, err := c.Client.Issues.CreateComment(ctx, owner, repoName, *existingPRNumber, &github.IssueComment{
+			Body: &desc,
+		})
+		if err != nil {
+			return fmt.Errorf("create comment on PR: %v", err)
+		}
+		prURL = *prComment.HTMLURL
 	}
+	log.Infof("changed push on PR %s", prURL)
 	return nil
 }

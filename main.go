@@ -52,8 +52,10 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	repoName := repoFullnameSplit[1]
 
 	rm := github.NewRepoManager(
-		repoName, owner, c.Workspace, c.GithubURL, c.GithubToken, c.FileSyncBranchRegexp,
-		ghClient,
+		owner, repoName,
+		c.Workspace,
+		c.GithubURL, c.GithubToken, ghClient,
+		c.FileSyncBranchRegexp,
 		c.FilesBindings,
 	)
 
@@ -89,7 +91,7 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 		// log.Infof().Msg("-> dry run: nothing pushed for real.")
 		// } else {
 		if err := rm.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
-			return fmt.Errorf("creating or updating file sync pr: %v", err)
+			return fmt.Errorf("update remote repo: %v", err)
 		}
 		// }
 	} else {

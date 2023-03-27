@@ -17,31 +17,40 @@ import (
 	cp "github.com/otiai10/copy"
 )
 
+// RepoManager is a handler
 type RepoManager struct {
+	// repo config
 	repoName string
 	owner    string
 
-	localPath            string
-	fileSyncBranchRegexp *regexp.Regexp
+	// local tmp file config
+	localPath string
 
+	// github config
 	ghHostURL string
 	ghToken   string
 	ghClient  Client
 
-	repo       *git.Repository
-	workTree   *git.Worktree
-	syncBranch string
-	syncRef    *plumbing.Reference
+	// additional config
+	fileSyncBranchRegexp *regexp.Regexp
+	fileBindings         map[string]string
+
+	// internal state
+	repo           *git.Repository
+	workTree       *git.Worktree
+	syncBranchName string
+	syncRef        *plumbing.Reference
 	// existingPRNumber is used for PR update and also indicates if PR and branch should be created - no distinction between these two elements for now
 	// it is set based on PR first (if sync branch exists without, it is either ignored or results in an error)
 	existingPRNumber *int
-
-	fileBindings map[string]string
 }
 
 func NewRepoManager(
-	repoName, owner, baseLocalPath, githubURL, githubToken, fileSyncBranchRegexpStr string,
+	owner, repoName,
+	baseLocalPath,
+	ghURL, ghToken string,
 	ghClient Client,
+	fileSyncBranchRegexpStr string,
 	fileBindings map[string]string,
 ) RepoManager {
 	rm := RepoManager{
@@ -50,17 +59,16 @@ func NewRepoManager(
 
 		localPath: path.Join(baseLocalPath, owner, repoName),
 
-		ghHostURL: githubURL,
-		ghToken:   githubToken,
+		ghHostURL: ghURL,
+		ghToken:   ghToken,
 		ghClient:  ghClient,
 
-		syncBranch:       fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
+		fileSyncBranchRegexp: regexp.MustCompile(fileSyncBranchRegexpStr),
+		fileBindings:         fileBindings,
+
+		syncBranchName:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
 		existingPRNumber: nil,                                                             // by default, consider creating a new PR
-
-		fileBindings: fileBindings,
 	}
-
-	rm.fileSyncBranchRegexp = regexp.MustCompile(fileSyncBranchRegexpStr)
 	return rm
 }
 
@@ -110,7 +118,7 @@ func (rm *RepoManager) PickSyncBranch(ctx context.Context) error {
 				log.Warnf("it seems there are two existing file sync pull request on repo %s", rm.repoName)
 				// TODO: take the latest one? close the oldest one?
 			}
-			rm.syncBranch = branchName
+			rm.syncBranchName = branchName
 			rm.existingPRNumber = &prNumber
 			alreadyFound = true
 		}
@@ -128,7 +136,7 @@ func (rm *RepoManager) PickSyncBranch(ctx context.Context) error {
 func (rm *RepoManager) setupLocalSyncBranch() error {
 	var err error
 	branchConfig := &config.Branch{
-		Name:   rm.syncBranch,
+		Name:   rm.syncBranchName,
 		Rebase: "true",
 	}
 	// a. new branch mode: symbolic ref and branch merge ref are based on the current local head ref
@@ -138,12 +146,12 @@ func (rm *RepoManager) setupLocalSyncBranch() error {
 		if err != nil {
 			return fmt.Errorf("getting head: %v", err)
 		}
-		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranch), headRef.Name())
+		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranchName), headRef.Name())
 		branchConfig.Merge = rm.syncRef.Name()
 	} else { // b
-		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranch), plumbing.NewRemoteReferenceName("origin", rm.syncBranch))
+		rm.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(rm.syncBranchName), plumbing.NewRemoteReferenceName("origin", rm.syncBranchName))
 		branchConfig.Merge = rm.syncRef.Name()
-		branchConfig.Remote = rm.syncBranch
+		branchConfig.Remote = rm.syncBranchName
 	}
 
 	// set the local storer reference
@@ -160,7 +168,7 @@ func (rm *RepoManager) setupLocalSyncBranch() error {
 		return fmt.Errorf("creating remote branch: %v", err)
 	}
 	// checkout the sync ref in the work tree
-	co := &git.CheckoutOptions{Branch: rm.syncRef.Name()}
+	co := &git.CheckoutOptions{Branch: rm.syncRef.Name(), Keep: true}
 	if err := rm.workTree.Checkout(co); err != nil {
 		return fmt.Errorf("checkout %s: %v", rm.syncRef.String(), err)
 	}
@@ -176,7 +184,7 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	}
 
 	// syncBranch and workTree should be set
-	if rm.syncBranch == "" || rm.workTree == nil {
+	if rm.syncBranchName == "" || rm.workTree == nil {
 		return false, fmt.Errorf("syncBranch or workTree is not set")
 	}
 
@@ -199,7 +207,6 @@ func (rm *RepoManager) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("getting status: %v", err)
 	}
-	fmt.Println(statuses)
 	// return true of status return a non empty result
 	return (len(statuses) > 0), nil
 }
@@ -210,14 +217,10 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 		return fmt.Errorf("moving to local path: %v", err)
 	}
 
-	rm.printStatus(ctx, "before add ----")
-
 	// add all files
 	if err := rm.workTree.AddGlob("."); err != nil {
 		return fmt.Errorf("adding: %v", err)
 	}
-
-	rm.printStatus(ctx, "before commit ----")
 
 	// commit changes
 	commitOpt := &git.CommitOptions{
@@ -231,9 +234,9 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 	pushOpt := &git.PushOptions{
 		RemoteName: "origin",
 		Auth:       rm.getBasicAuth(),
-		Force:      true,
-		Atomic:     true,
-		// ForceWithLease: &git.ForceWithLease{RefName: plumbing.ReferenceName(rm.syncBranch)},
+		// Force:      true,
+		// Atomic: true,
+		// ForceWithLease: &git.ForceWithLease{RefName: plumbing.ReferenceName(rm.syncBranchName)},
 	}
 	if err := rm.repo.PushContext(ctx, pushOpt); err != nil {
 		return fmt.Errorf("pushing: %v", err)
@@ -242,7 +245,7 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 	if err := rm.ghClient.CreateOrUpdatePR(
 		ctx, rm.existingPRNumber,
 		rm.owner, rm.repoName,
-		"main", rm.syncBranch,
+		"main", rm.syncBranchName,
 		prTitle, commitMsg,
 	); err != nil {
 		return fmt.Errorf("creating/updating PR: %v", err)
@@ -258,7 +261,7 @@ func (rm *RepoManager) CleanAll(ctx context.Context) error {
 }
 
 // printStatus is only used for debug purpose
-func (rm *RepoManager) printStatus(_ context.Context, msg string) {
+func (rm *RepoManager) printStatus(_ context.Context, msg string) { // nolint:unused
 	fmt.Println(msg)
 	statuses, err := rm.workTree.Status()
 	if err != nil {

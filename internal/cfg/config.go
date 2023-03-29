@@ -157,8 +157,8 @@ func getPRTitle() (string, error) {
 		return "", fmt.Errorf("PR_TITLE is empty but required")
 	}
 	// auto-truncate pr title - 80 characters maximum
-	if len(prTitle) > 80 {
-		prTitle = prTitle[:79]
+	if len(prTitle) > 100 {
+		prTitle = prTitle[:99]
 	}
 	return prTitle, nil
 }

@@ -168,7 +168,7 @@ func (rm *RepoManager) setupLocalSyncBranch() error {
 		return fmt.Errorf("creating remote branch: %v", err)
 	}
 	// checkout the sync ref in the work tree
-	co := &git.CheckoutOptions{Branch: rm.syncRef.Name(), Keep: true}
+	co := &git.CheckoutOptions{Branch: rm.syncRef.Name()}
 	if err := rm.workTree.Checkout(co); err != nil {
 		return fmt.Errorf("checkout %s: %v", rm.syncRef.String(), err)
 	}
@@ -234,9 +234,8 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 	pushOpt := &git.PushOptions{
 		RemoteName: "origin",
 		Auth:       rm.getBasicAuth(),
-		// Force:      true,
-		// Atomic: true,
-		// ForceWithLease: &git.ForceWithLease{RefName: plumbing.ReferenceName(rm.syncBranchName)},
+		Force:      true,
+		Atomic:     true,
 	}
 	if err := rm.repo.PushContext(ctx, pushOpt); err != nil {
 		return fmt.Errorf("pushing: %v", err)

@@ -13,6 +13,7 @@ type Client struct {
 	*github.Client
 }
 
+// NewClient for github with authentication configured
 func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
@@ -22,6 +23,19 @@ func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	return Client{c}, nil
 }
 
+// GetCurrentUsernameAndEmail return the username and email of the current authenticated user
+func (c Client) GetCurrentUsernameAndEmail(ctx context.Context) (string, string, error) {
+	user, _, err := c.Client.Users.Get(ctx, "") // empty string makes the library returning the authenticated user
+	if err != nil {
+		return "", "", fmt.Errorf("getting user: %v", err)
+	}
+	if user == nil || user.Name == nil || user.Email == nil {
+		return "", "", fmt.Errorf("incomplete retrieved user")
+	}
+	return *user.Name, *user.Email, nil
+}
+
+// GetBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
 func (c Client) GetBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
 	opt := &github.PullRequestListOptions{State: "open"}
 
@@ -40,10 +54,12 @@ func (c Client) GetBranchNameByPRNumbers(ctx context.Context, owner, repoName st
 	return branchNameByPRNumbers, nil
 }
 
+// CreateOrUpdatePR according to the existingPRNumber parameter
+// on update, the desc is added to the Pull Request as a comment
 func (c Client) CreateOrUpdatePR(
 	ctx context.Context, existingPRNumber *int,
 	owner, repoName,
-	baseBranch, syncBranch,
+	baseBranch, headBranch,
 	title, desc string,
 ) error {
 	prURL := "unexpected-unset-pr-url"
@@ -52,7 +68,7 @@ func (c Client) CreateOrUpdatePR(
 		pr := &github.NewPullRequest{
 			Title:               &title,
 			Base:                &baseBranch,
-			Head:                &syncBranch,
+			Head:                &headBranch,
 			Body:                &desc,
 			MaintainerCanModify: &canBeModified,
 		}

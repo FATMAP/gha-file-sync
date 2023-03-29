@@ -13,6 +13,7 @@ import (
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	cp "github.com/otiai10/copy"
 )
@@ -31,6 +32,10 @@ type RepoManager struct {
 	ghToken   string
 	ghClient  Client
 
+	// git config
+	authorEmail string
+	authorName  string
+
 	// additional config
 	fileSyncBranchRegexp *regexp.Regexp
 	fileBindings         map[string]string
@@ -46,14 +51,16 @@ type RepoManager struct {
 }
 
 func NewRepoManager(
+	ctx context.Context,
 	owner, repoName,
 	baseLocalPath,
 	ghURL, ghToken string,
 	ghClient Client,
 	fileSyncBranchRegexpStr string,
 	fileBindings map[string]string,
-) RepoManager {
-	rm := RepoManager{
+) (rm RepoManager, err error) {
+	// init the repo manager
+	rm = RepoManager{
 		repoName: repoName,
 		owner:    owner,
 
@@ -69,7 +76,13 @@ func NewRepoManager(
 		syncBranchName:   fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02")), // default branch
 		existingPRNumber: nil,                                                             // by default, consider creating a new PR
 	}
-	return rm
+
+	// add to the repo manager the author information
+	rm.authorName, rm.authorEmail, err = ghClient.GetCurrentUsernameAndEmail(ctx)
+	if err != nil {
+		return rm, err
+	}
+	return rm, nil
 }
 
 func (rm *RepoManager) getRepoURL() string {
@@ -225,6 +238,11 @@ func (rm *RepoManager) UpdateRemote(ctx context.Context, commitMsg, prTitle stri
 	// commit changes
 	commitOpt := &git.CommitOptions{
 		All: true, // TODO: to test new added file
+		Author: &object.Signature{
+			Name:  rm.authorName,
+			Email: rm.authorEmail,
+			When:  time.Now(),
+		},
 	}
 	if _, err := rm.workTree.Commit(commitMsg, commitOpt); err != nil {
 		return fmt.Errorf("commiting: %v", err)

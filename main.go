@@ -51,13 +51,17 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	owner := repoFullnameSplit[0]
 	repoName := repoFullnameSplit[1]
 
-	rm := github.NewRepoManager(
+	rm, err := github.NewRepoManager(
+		ctx,
 		owner, repoName,
 		c.Workspace,
 		c.GithubURL, c.GithubToken, ghClient,
 		c.FileSyncBranchRegexp,
 		c.FilesBindings,
 	)
+	if err != nil {
+		return fmt.Errorf("create repo manager: %v", err)
+	}
 
 	// ensure we clean data at the end of the sync
 	defer func() {
@@ -68,7 +72,7 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	}()
 
 	// clone the repo to local filesystem
-	err := rm.Clone(ctx)
+	err = rm.Clone(ctx)
 	if err != nil {
 		return fmt.Errorf("cloning: %v", err)
 	}

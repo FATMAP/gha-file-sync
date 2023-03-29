@@ -87,13 +87,13 @@ func (c Client) CreateOrUpdatePR(
 		prURL = *createdPR.HTMLURL
 	} else { // update mode = create a comment with the given desc
 		fmt.Println("Issue number (pr): ", *existingPRNumber)
-		// prComment, _, err := c.Client.Issues.CreateComment(ctx, owner, repoName, *existingPRNumber, &github.IssueComment{
-		// 	Body: &desc,
-		// })
-		// if err != nil {
-		// 	return fmt.Errorf("create comment on PR: %v", err)
-		// }
-		// prURL = *prComment.HTMLURL
+		prComment, _, err := c.Client.Issues.CreateComment(ctx, owner, repoName, *existingPRNumber, &github.IssueComment{
+			Body: &desc,
+		})
+		if err != nil {
+			return fmt.Errorf("create comment on PR: %v", err)
+		}
+		prURL = *prComment.HTMLURL
 	}
 	log.Infof("changed push on PR %s", prURL)
 	return nil

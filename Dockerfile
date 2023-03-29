@@ -7,6 +7,7 @@ LABEL maintainer="github.com/SlevinWasAlreadyTaken"
 WORKDIR /app
 
 # modules
+ARG CGO_ENABLED=0
 COPY go.mod ./
 COPY go.sum ./
 RUN go mod download

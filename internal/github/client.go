@@ -29,10 +29,18 @@ func (c Client) GetCurrentUsernameAndEmail(ctx context.Context) (string, string,
 	if err != nil {
 		return "", "", fmt.Errorf("getting user: %v", err)
 	}
-	if user == nil || user.Name == nil || user.Email == nil {
+	if user == nil {
 		return "", "", fmt.Errorf("incomplete retrieved user")
 	}
-	return *user.Name, *user.Email, nil
+
+	var name, email string
+	if user.Login != nil {
+		name = *user.Login
+	}
+	if user.Email != nil {
+		email = *user.Email
+	}
+	return name, email, nil
 }
 
 // GetBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs

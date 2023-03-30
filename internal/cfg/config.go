@@ -27,7 +27,7 @@ type Config struct {
 }
 
 // InitConfig based on env variables
-func InitConfig() (c Config, err error) {
+func InitConfig() (c Config, err error) { //nolint:cyclop
 	if c.RepositoryNames, err = getRepositoryNames(); err != nil {
 		return c, err
 	}

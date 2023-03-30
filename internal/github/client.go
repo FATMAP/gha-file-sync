@@ -41,12 +41,15 @@ func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 
 // GetHeadBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
 func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
-	opt := &github.PullRequestListOptions{State: "open"}
+	opt := &github.PullRequestListOptions{State: "open", ListOptions: github.ListOptions{Page: 99}}
 
-	// TODO: check if pagination is mandatory to implement day 1
 	prs, _, err := c.Client.PullRequests.List(ctx, owner, repoName, opt)
 	if err != nil {
 		return nil, fmt.Errorf("listing prs: %v", err)
+	}
+	// log a warning if the number of PR retrieved is the maximum page size
+	if len(prs) == 99 {
+		log.Warnf("99 opened PRs on this repository, this may make the synchronization to fail")
 	}
 
 	headBranchNameByPRNumbers := make(map[int]string, len(prs))
@@ -77,7 +80,7 @@ func (c Client) CreateOrUpdatePR(
 		}
 		createdPR, _, err := c.Client.PullRequests.Create(ctx, owner, repoName, pr)
 		if err != nil {
-			return fmt.Errorf("creating PR: %v", err)
+			return fmt.Errorf("creating PR: %s", err)
 		}
 		log.Infof("PR created: %s", *createdPR.HTMLURL)
 	} else { // update mode = create a comment with the given desc

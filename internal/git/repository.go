@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -23,9 +24,10 @@ type Repository struct {
 	authorName string
 
 	// internal state
-	repo     *git.Repository
-	workTree *git.Worktree
-	syncRef  *plumbing.Reference
+	baseBranchName string // main or master
+	repo           *git.Repository
+	workTree       *git.Worktree
+	syncRef        *plumbing.Reference
 }
 
 // NewRepository clones a repository locally based on given parameters and returns a reference to its object
@@ -60,8 +62,21 @@ func NewRepository(
 }
 
 // GetBaseBranchName based on the repo
-func (r *Repository) GetBaseBranchName() string {
-	return "main" // TODO: handle master
+func (r *Repository) GetBaseBranchName() (string, error) {
+	if r.baseBranchName == "" {
+		c, err := r.repo.Config()
+		if err != nil {
+			return "", fmt.Errorf("could not get config: %v", err)
+		}
+		if _, ok := c.Branches["main"]; ok {
+			r.baseBranchName = "main"
+		} else if _, ok := c.Branches["master"]; ok {
+			r.baseBranchName = "master"
+		} else {
+			return "", fmt.Errorf("no base branch found (main|master)")
+		}
+	}
+	return r.baseBranchName, nil
 }
 
 // GetSyncBranchName
@@ -96,7 +111,7 @@ func (r *Repository) AddCommitPush(
 
 	// commit changes
 	commitOpt := &git.CommitOptions{
-		All: true, // TODO test with false + deleted files
+		All: true,
 		Author: &object.Signature{
 			Name: r.authorName,
 			When: time.Now(),
@@ -127,6 +142,10 @@ func (r *Repository) ChangeDetected() (bool, error) {
 	}
 	// return true of status return a non empty result
 	return (len(statuses) > 0), nil
+}
+
+func (r *Repository) Clean() error {
+	return os.RemoveAll(r.localPath)
 }
 
 // SetupLocalSyncBranch performs low level git operations to setup sync branch

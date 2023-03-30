@@ -61,5 +61,4 @@ func Init() {
 	}
 	logger := slog.New(slog.HandlerOptions{ReplaceAttr: removeTimeAndSourceDirectory}.NewTextHandler(os.Stdout))
 	slog.SetDefault(logger)
-	Infof("Logger init...")
 }

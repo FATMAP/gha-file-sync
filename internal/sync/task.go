@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"regexp"
 	"time"
@@ -168,18 +167,21 @@ func (t *Task) UpdateRemote(ctx context.Context, commitMsg, prTitle string) erro
 	if err := t.gitRepo.AddCommitPush(ctx, commitMsg); err != nil {
 		return err
 	}
+	baseBranchName, err := t.gitRepo.GetBaseBranchName()
+	if err != nil {
+		return err
+	}
 	if err := t.ghClient.CreateOrUpdatePR(
 		ctx, t.existingPRNumber,
 		t.owner, t.repoName,
-		t.gitRepo.GetBaseBranchName(), t.gitRepo.GetSyncBranchName(),
+		baseBranchName, t.gitRepo.GetSyncBranchName(),
 		prTitle, commitMsg,
 	); err != nil {
-		return fmt.Errorf("creating/updating PR: %v", err)
+		return err
 	}
 	return nil
 }
 
 func (t *Task) CleanAll(ctx context.Context) error {
-	// remove the repository folder on local filesystem
-	return os.RemoveAll(t.targetPath)
+	return t.gitRepo.Clean()
 }

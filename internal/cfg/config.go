@@ -68,12 +68,12 @@ func (c Config) Print() {
 	configStr := fmt.Sprintln(
 		"\tRepositories:\n\t", repoNamesStr,
 		"\tFiles bindings:\n\t", fileBindingsStr,
-		"\tDry Run:\n\t", c.IsDryRun,
-		"\n\tIs GitHub token set?\n\t", (len(c.GithubToken) != 0),
-		"\n\tGithub host URL:\n\t", c.GithubURL,
-		"\n\tCommit message:\n\t", c.CommitMessage,
-		"\n\tFile sync branch regexp:\n\t", c.FileSyncBranchRegexp,
-		"\n\tWorkspace:\n\t", c.Workspace,
+		"\tDry Run:", c.IsDryRun,
+		"\n\tIs GitHub token set?", (len(c.GithubToken) != 0),
+		"\n\tGithub host URL: ", c.GithubURL,
+		"\n\tCommit message: ", c.CommitMessage,
+		"\n\tFile sync branch regexp: ", c.FileSyncBranchRegexp,
+		"\n\tWorkspace: ", c.Workspace,
 	)
 	fmt.Println(configStr)
 }

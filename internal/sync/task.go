@@ -136,7 +136,7 @@ func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	}
 
 	// local git repo should be setup
-	if t.gitRepo.IsSetup() {
+	if t.gitRepo.IsNotSetup() {
 		return false, fmt.Errorf("local git repo is not setup correctly")
 	}
 

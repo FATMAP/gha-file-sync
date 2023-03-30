@@ -76,11 +76,11 @@ func (r *Repository) SetSyncBranchName(name string) {
 	r.syncBranchName = name
 }
 
-// IsSetup returns true if all internal state has been set
-func (r *Repository) IsSetup() bool {
-	return (r.repo != nil &&
-		r.workTree != nil &&
-		r.syncRef != nil)
+// IsNotSetup returns true if any important internal state variable is not set
+func (r *Repository) IsNotSetup() bool {
+	return (r.repo == nil ||
+		r.workTree == nil ||
+		r.syncRef == nil)
 }
 
 // Add, Commit, Push from the current local folder to remote

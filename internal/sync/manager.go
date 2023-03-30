@@ -53,13 +53,13 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 
 	if hasChanged {
 		log.Infof("-> it has changed!")
-		// if c.IsDryRun {
-		// log.Infof("-> dry run: no concrete write action.")
-		// } else {
-		if err := t.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
-			return fmt.Errorf("update remote repo: %v", err)
+		if c.IsDryRun {
+			log.Infof("-> dry run: no concrete write action.")
+		} else {
+			if err := t.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
+				return fmt.Errorf("update remote repo: %v", err)
+			}
 		}
-		// }
 	} else {
 		log.Infof("-> nothing has changed.")
 	}

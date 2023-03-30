@@ -21,7 +21,7 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 	t, err := NewTask(
 		ctx,
 		owner, repoName,
-		c.Workspace,
+		c.FileSourcePath, c.Workspace,
 		c.GithubURL, c.GithubToken, ghClient,
 		c.FileSyncBranchRegexp,
 		c.FilesBindings,

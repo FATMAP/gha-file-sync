@@ -22,7 +22,8 @@ type Config struct {
 	PRTitle              string
 	FileSyncBranchRegexp string
 
-	Workspace string
+	Workspace      string // where the repository should be cloned
+	FileSourcePath string // where the source file are stored - set to current dir
 }
 
 // InitConfig based on env variables
@@ -54,6 +55,9 @@ func InitConfig() (c Config, err error) {
 	if c.Workspace, err = getWorkspace(); err != nil {
 		return c, err
 	}
+	if c.FileSourcePath, err = os.Getwd(); err != nil {
+		return c, err
+	}
 	return c, nil
 }
 
@@ -76,6 +80,7 @@ func (c Config) Print() {
 		"\n\tCommit message: ", c.CommitMessage,
 		"\n\tFile sync branch regexp: ", c.FileSyncBranchRegexp,
 		"\n\tWorkspace: ", c.Workspace,
+		"\n\tFile Source Path: ", c.FileSourcePath,
 	)
 	fmt.Println(configStr)
 }

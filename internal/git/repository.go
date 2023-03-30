@@ -3,7 +3,6 @@ package git
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -30,7 +29,6 @@ type Repository struct {
 }
 
 // NewRepository clones a repository locally based on given parameters and returns a reference to its object
-// /!\ it is not concurrent safe
 func NewRepository(
 	ctx context.Context,
 	localPath, repoURL, syncBranchName string,
@@ -87,14 +85,12 @@ func (r *Repository) IsNotSetup() bool {
 func (r *Repository) AddCommitPush(
 	ctx context.Context, commitMsg string,
 ) error {
-	// move to the repo
-	// TODO: make this asynchronously callable by using AddOption and
-	if err := os.Chdir(r.localPath); err != nil {
-		return fmt.Errorf("moving to local path: %v", err)
-	}
-
 	// add all files
-	if err := r.workTree.AddGlob("."); err != nil {
+	opt := git.AddOptions{
+		All:  true,
+		Path: r.localPath,
+	}
+	if err := r.workTree.AddWithOptions(&opt); err != nil {
 		return fmt.Errorf("adding: %v", err)
 	}
 

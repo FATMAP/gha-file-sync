@@ -22,7 +22,8 @@ type Task struct {
 	owner    string
 
 	// local tmp file config
-	localPath string
+	sourcePath string
+	targetPath string
 
 	// github config
 	ghHostURL string
@@ -45,11 +46,10 @@ type Task struct {
 
 // NewTask configured with default values and given parameters
 // one task per repository
-// not concurrent safe - cf git.AddCommitPush
 func NewTask(
 	ctx context.Context,
 	owner, repoName,
-	baseLocalPath,
+	baseSourcePath, baseTargetPath,
 	ghURL, ghToken string,
 	ghClient github.Client,
 	fileSyncBranchRegexpStr string,
@@ -60,7 +60,8 @@ func NewTask(
 		repoName: repoName,
 		owner:    owner,
 
-		localPath: path.Join(baseLocalPath, owner, repoName),
+		sourcePath: baseSourcePath,
+		targetPath: path.Join(baseTargetPath, owner, repoName),
 
 		ghHostURL: ghURL,
 		ghToken:   ghToken,
@@ -80,7 +81,7 @@ func NewTask(
 	defaultBranchName := fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02"))
 	t.gitRepo, err = mygit.NewRepository(
 		ctx,
-		path.Join(baseLocalPath, owner, repoName), // where to clone locally
+		t.targetPath,
 		github.GetRepoURL(t.ghHostURL, t.owner, t.repoName), defaultBranchName,
 		github.GetBasicAuth(t.ghToken), authorName,
 	)
@@ -144,10 +145,15 @@ func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	// according to configured bindings
 	atLeastOneSuccess := false
 	for src, dest := range t.fileBindings {
-		if err := cp.Copy(src, path.Join(t.localPath, dest)); err != nil {
+		// build absolute path to copy
+		src = path.Join(t.sourcePath, src)
+		dest = path.Join(t.targetPath, dest)
+
+		if err := cp.Copy(src, dest); err != nil {
 			log.Errorf("copying %s to %s: %v", src, dest, err)
 			continue
 		}
+
 		atLeastOneSuccess = true
 	}
 	if !atLeastOneSuccess {
@@ -175,5 +181,5 @@ func (t *Task) UpdateRemote(ctx context.Context, commitMsg, prTitle string) erro
 
 func (t *Task) CleanAll(ctx context.Context) error {
 	// remove the repository folder on local filesystem
-	return os.RemoveAll(t.localPath)
+	return os.RemoveAll(t.targetPath)
 }

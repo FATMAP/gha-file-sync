@@ -90,7 +90,7 @@ func NewTask(
 	return t, nil
 }
 
-// PicksyncBranch on the repo RepositoryManager structure which will be used to compare files
+// PickSyncBranch on the repo which will be used to compare files  and push potential changes
 // could be:
 // - a new branch based on the repo's HEAD: probably main or master
 // - an existing file sync branch

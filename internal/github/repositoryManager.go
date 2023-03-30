@@ -130,10 +130,11 @@ func (rm *RepoManager) PickSyncBranch(ctx context.Context) error {
 			if alreadyFound {
 				log.Warnf("it seems there are two existing file sync pull request on repo %s", rm.repoName)
 				// TODO: take the latest one? close the oldest one?
+				break
 			}
-			rm.syncBranchName = branchName
-			rm.existingPRNumber = &prNumber
 			alreadyFound = true
+			rm.syncBranchName = branchName
+			*rm.existingPRNumber = prNumber
 		}
 	}
 

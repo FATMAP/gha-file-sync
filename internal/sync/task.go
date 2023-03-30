@@ -120,7 +120,7 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 	}
 
 	// configure the branch locally
-	isNewBranch := (t.existingPRNumber != nil)
+	isNewBranch := (t.existingPRNumber == nil)
 	if err := t.gitRepo.SetupLocalSyncBranch(isNewBranch); err != nil {
 		return fmt.Errorf("setting up sync branch locally: %v", err)
 	}

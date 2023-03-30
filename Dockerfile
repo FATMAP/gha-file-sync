@@ -16,7 +16,7 @@ RUN go mod download
 COPY . .
 
 # compile
-RUN go build -o /bin/git-file-sync
+RUN go build -o /bin/github-file-sync
 
 #
 ## run stage - minimalist final image
@@ -26,6 +26,6 @@ FROM alpine:3.17
 RUN apk add libc6-compat
 
 # get binary from build image
-COPY --from=builder /bin/git-file-sync /bin/git-file-sync
+COPY --from=builder /bin/github-file-sync /bin/github-file-sync
 
-ENTRYPOINT ["/bin/git-file-sync"]
+ENTRYPOINT ["/bin/github-file-sync"]

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git-file-sync/internal/log"
+	"github-file-sync/internal/log"
 )
 
 type Config struct {

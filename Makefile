@@ -10,4 +10,4 @@ SHELL = /usr/bin/env bash
 
 .PHONY: run
 run:
-	go build &&	./git-file-sync
+	go build &&	./github-file-sync

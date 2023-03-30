@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"git-file-sync/internal/cfg"
-	"git-file-sync/internal/github"
-	"git-file-sync/internal/log"
+	"github-file-sync/internal/cfg"
+	"github-file-sync/internal/github"
+	"github-file-sync/internal/log"
 )
 
 // Do synchronize one repository

@@ -1,4 +1,4 @@
-module git-file-sync
+module github-file-sync
 
 go 1.20
 

@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-git-file-sync
+github-file-sync
 
 # Test binary, built with `go test -c`
 *.test

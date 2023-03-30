@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"git-file-sync/internal/log"
+	"github-file-sync/internal/log"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"

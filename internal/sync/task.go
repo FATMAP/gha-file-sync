@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"time"
 
-	mygit "git-file-sync/internal/git"
-	"git-file-sync/internal/github"
-	"git-file-sync/internal/log"
+	mygit "github-file-sync/internal/git"
+	"github-file-sync/internal/github"
+	"github-file-sync/internal/log"
 
 	cp "github.com/otiai10/copy"
 )

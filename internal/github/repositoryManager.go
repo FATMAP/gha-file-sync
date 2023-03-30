@@ -134,6 +134,7 @@ func (rm *RepoManager) PickSyncBranch(ctx context.Context) error {
 			}
 			alreadyFound = true
 			rm.syncBranchName = branchName
+			rm.existingPRNumber = new(int)
 			*rm.existingPRNumber = prNumber
 		}
 	}

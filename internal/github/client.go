@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+
 	"git-file-sync/internal/log"
 
 	"github.com/google/go-github/github"
@@ -23,24 +24,19 @@ func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	return Client{c}, nil
 }
 
-// GetCurrentUsernameAndEmail return the username and email of the current authenticated user
-func (c Client) GetCurrentUsernameAndEmail(ctx context.Context) (string, string, error) {
+// GetAuthenticatedUsername return the username of the current authenticated user
+func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 	user, _, err := c.Client.Users.Get(ctx, "") // empty string makes the library returning the authenticated user
 	if err != nil {
-		return "", "", fmt.Errorf("getting user: %v", err)
+		return "", fmt.Errorf("getting user: %v", err)
 	}
 	if user == nil {
-		return "", "", fmt.Errorf("incomplete retrieved user")
+		return "", fmt.Errorf("retrieved a nil user")
 	}
-
-	var name, email string
-	if user.Login != nil {
-		name = *user.Login
+	if user.Login == nil {
+		return "", fmt.Errorf("retrieved an empty login")
 	}
-	if user.Email != nil {
-		email = *user.Email
-	}
-	return name, email, nil
+	return *user.Login, nil
 }
 
 // GetBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
@@ -70,7 +66,6 @@ func (c Client) CreateOrUpdatePR(
 	baseBranch, headBranch,
 	title, desc string,
 ) error {
-	var prURL string
 	if existingPRNumber == nil { // create mode
 		canBeModified := true
 		pr := &github.NewPullRequest{
@@ -84,17 +79,16 @@ func (c Client) CreateOrUpdatePR(
 		if err != nil {
 			return fmt.Errorf("creating PR: %v", err)
 		}
-		prURL = *createdPR.HTMLURL
+		log.Infof("PR created: %s", *createdPR.HTMLURL)
 	} else { // update mode = create a comment with the given desc
 		desc = fmt.Sprintf("PR updated with additional changes: %s", desc)
 		prComment, _, err := c.Client.Issues.CreateComment(ctx, owner, repoName, *existingPRNumber, &github.IssueComment{
 			Body: &desc,
 		})
 		if err != nil {
-			return fmt.Errorf("create comment on PR: %v", err)
+			return fmt.Errorf("creating comment on PR: %v", err)
 		}
-		prURL = *prComment.HTMLURL
+		log.Infof("PR updated: %s", *prComment.HTMLURL)
 	}
-	log.Infof("Changes push on PR %s", prURL)
 	return nil
 }

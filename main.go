@@ -9,6 +9,7 @@ import (
 	"git-file-sync/internal/cfg"
 	"git-file-sync/internal/github"
 	"git-file-sync/internal/log"
+	"git-file-sync/internal/sync"
 )
 
 func main() {
@@ -51,7 +52,7 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 	owner := repoFullnameSplit[0]
 	repoName := repoFullnameSplit[1]
 
-	rm, err := github.NewRepoManager(
+	t, err := sync.NewTask(
 		ctx,
 		owner, repoName,
 		c.Workspace,
@@ -65,39 +66,33 @@ func syncRepository(ctx context.Context, c cfg.Config, ghClient github.Client, r
 
 	// ensure we clean data at the end of the sync
 	defer func() {
-		err := rm.CleanAll(ctx)
+		err := t.CleanAll(ctx)
 		if err != nil {
 			log.Errorf("cleaning %s: %v", repoFullname, err)
 		}
 	}()
 
-	// clone the repo to local filesystem
-	err = rm.Clone(ctx)
-	if err != nil {
-		return fmt.Errorf("cloning: %v", err)
-	}
-
-	// set the final sync branch
-	err = rm.PickSyncBranch(ctx)
+	// compute the sync branch to contribute on
+	err = t.PickSyncBranch(ctx)
 	if err != nil {
 		return fmt.Errorf("picking base branch to compare: %v", err)
 	}
 
-	// check if status reports changes
-	hasChanged, err := rm.HasChangedAfterCopy(ctx)
+	// check if anything has changed
+	hasChanged, err := t.HasChangedAfterCopy(ctx)
 	if err != nil {
 		return fmt.Errorf("has changed: %v", err)
 	}
 
 	if hasChanged {
 		log.Infof("-> it has changed!")
-		// if c.IsDryRun {
-		// log.Infof().Msg("-> dry run: nothing pushed for real.")
-		// } else {
-		if err := rm.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
-			return fmt.Errorf("update remote repo: %v", err)
+		if c.IsDryRun {
+			log.Infof("-> dry run: no concrete write action.")
+		} else {
+			if err := t.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
+				return fmt.Errorf("update remote repo: %v", err)
+			}
 		}
-		// }
 	} else {
 		log.Infof("-> nothing has changed.")
 	}

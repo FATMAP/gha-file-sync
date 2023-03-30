@@ -39,8 +39,8 @@ func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 	return *user.Login, nil
 }
 
-// GetBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
-func (c Client) GetBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
+// GetHeadBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
+func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
 	opt := &github.PullRequestListOptions{State: "open"}
 
 	// TODO: check if pagination is mandatory to implement day 1
@@ -49,13 +49,13 @@ func (c Client) GetBranchNameByPRNumbers(ctx context.Context, owner, repoName st
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
 
-	branchNameByPRNumbers := make(map[int]string, len(prs))
+	headBranchNameByPRNumbers := make(map[int]string, len(prs))
 	for _, pr := range prs {
 		if pr.Head.Ref != nil && pr.Number != nil {
-			branchNameByPRNumbers[*pr.Number] = *pr.Head.Ref
+			headBranchNameByPRNumbers[*pr.Number] = *pr.Head.Ref
 		}
 	}
-	return branchNameByPRNumbers, nil
+	return headBranchNameByPRNumbers, nil
 }
 
 // CreateOrUpdatePR according to the existingPRNumber parameter

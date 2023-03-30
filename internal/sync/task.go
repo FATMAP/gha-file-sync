@@ -96,7 +96,7 @@ func NewTask(
 // - an existing file sync branch
 func (t *Task) PickSyncBranch(ctx context.Context) error {
 	// try to find an existing file sync branch by checking opened PRs
-	branchNameByPRNumbers, err := t.ghClient.GetBranchNameByPRNumbers(ctx, t.owner, t.repoName)
+	branchNameByPRNumbers, err := t.ghClient.GetHeadBranchNameByPRNumbers(ctx, t.owner, t.repoName)
 	if err != nil {
 		return fmt.Errorf("getting branches: %v", err)
 	}

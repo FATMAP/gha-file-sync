@@ -1,42 +1,49 @@
 # gha-file-sync
 
-Github Action for Cross-Repos File Synchronisation using Pull Requests.
+Github Action for Cross-Repos Files Synchronization using Pull Requests.
+## What 
+
+For a list of given repositories and file bindings, this action will open/update pull requests to synchronize the files that have changed.
+The source of files is the repository where the action runs.
+
+For each targeted repository:
+  1. Clone the repository.
+  2. Compute the final branch name and PR according to existing opened PRs.
+  3. Check if changes have been made following files bindings configuration.
+  4. Create or update a pull request if changes have been detected.
+  5. Clean all created files locally.
 
 ## Configuration
 
 See `action.yml` for more information.
-
-## What 
-
-For a list of given repositories and file bindings, this action will open/update pull requests to synchronize the files.
-The files source is the repository where the action runs.
-
-For each target repository:
-  - Clone the repository.
-  - Compute the final bra6nch and PR according to existing opened PRs.
-  - Check if changes have been made following files bindings configuration.
-  - Create or Update the pull request if something has changed.
-  - Clean all created files locally.
-
 ## Missing
 
-This action only manage to synchronize new files and updated files.
-Remove or rename is not handled as of today.
+This action only manages to synchronize new files and updated files.
+Removals or renames are not handled yet.
 
 ## Features wished to be added
 
+
+#### Handling of removed/renamed files
+
+Today, because only a raw copy of the source files is used, the removals and renames of files are not handled yet.
 #### Commits messages as PR desc
 
-Today, the PR desc and comments are pointing by default to the releases which triggered the synchronization.
-It would be better to directly have the list of commits or even the original PR description.
-#### Smart Custom Detection
+Today, the PR description and comments are pointing by default to the release which triggered the synchronization.
+It would be better to provide more information about the release, for example:
+- the release description.
+- the list of added commits.
+- the original PR description.
+#### 'Customs' Detection
 
-Sometimes the synched files are customized locally, it should raise a warning when it is the case.
+Sometimes the synchronized files are customized locally for some reasons, it is hard to know about it when tens of repositories are involved.
+The action should raise a warning somewhere if it detects a customization. Some rules as examples:
 
--  Warn about custom by checking with the previous version
-    - if current_branch = main + custom detected
-        - WARN in the PR desc
-    - if current_branch = existing_pr + custom detected + no custom tag yet
-      - WARN in a comment + update the title with sync CUSTOM
-    - if current_branch = existing_pr + custom detected + custom tag detected
-        - WARN in a comment
+In order to find customization, it should compare the target files with the version `n - 1` of the source files to see if it was already differing.
+
+- if it is a PR creation:
+    - WARN in the PR desc
+- if it is a PR update and the title does not contain `CUSTOM_DETECTED`:
+  - WARN in a comment + update the title with sync `CUSTOM_DETECTED`
+- if it is a PR update and the title contains `CUSTOM_DETECTED`:
+  - WARN in a comment

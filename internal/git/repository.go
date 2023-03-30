@@ -62,18 +62,20 @@ func NewRepository(
 }
 
 // GetBaseBranchName based on the repo
+// first it tries to get a "main" branch, then a "master" branch, then it fails
 func (r *Repository) GetBaseBranchName() (string, error) {
 	if r.baseBranchName == "" {
 		c, err := r.repo.Config()
 		if err != nil {
 			return "", fmt.Errorf("could not get config: %v", err)
 		}
-		if _, ok := c.Branches["main"]; ok {
-			r.baseBranchName = "main"
-		} else if _, ok := c.Branches["master"]; ok {
+		r.baseBranchName = "main" // consider naively that it is "main"
+
+		if _, ok := c.Branches["main"]; !ok {
+			if _, ok := c.Branches["master"]; !ok {
+				return "", fmt.Errorf("no base branch found (main|master)")
+			}
 			r.baseBranchName = "master"
-		} else {
-			return "", fmt.Errorf("no base branch found (main|master)")
 		}
 	}
 	return r.baseBranchName, nil

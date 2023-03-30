@@ -1,24 +1,37 @@
 # gha-file-sync
 
-Github Action for Cross-Repos File Synchronisation using Pull Requests
+Github Action for Cross-Repos File Synchronisation using Pull Requests.
 
-## Features
+## Configuration
 
-**not implemented yet**
+See `action.yml` for more information.
 
-1. Get the list of repositories
-2. For each repo:
-  - Clone the repository
-  - Get final branch - could be an existing file-sync pull request or main.
-  - Make the diff following files bindings configuration
+## What 
+
+For a list of given repositories and file bindings, this action will open/update pull requests to synchronize the files.
+The files source is the repository where the action runs.
+
+For each target repository:
+  - Clone the repository.
+  - Compute the final bra6nch and PR according to existing opened PRs.
+  - Check if changes have been made following files bindings configuration.
   - Create or Update the pull request if something has changed.
-  - Remove the repository locally
+  - Clean all created files locally.
 
+## Missing
+
+This action only manage to synchronize new files and updated files.
+Remove or rename is not handled as of today.
+
+## Features wished to be added
+
+#### Commits messages as PR desc
+
+Today, the PR desc and comments are pointing by default to the releases which triggered the synchronization.
+It would be better to directly have the list of commits or even the original PR description.
 #### Smart Custom Detection
 
-**not implemented yet**
-
-Sometimes the synched files are customized locally, we should raise warning when it is the case.
+Sometimes the synched files are customized locally, it should raise a warning when it is the case.
 
 -  Warn about custom by checking with the previous version
     - if current_branch = main + custom detected

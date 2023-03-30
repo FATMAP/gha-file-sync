@@ -25,6 +25,7 @@ type Config struct {
 	Workspace string
 }
 
+// InitConfig based on env variables
 func InitConfig() (c Config, err error) {
 	if c.RepositoryNames, err = getRepositoryNames(); err != nil {
 		return c, err
@@ -56,18 +57,19 @@ func InitConfig() (c Config, err error) {
 	return c, nil
 }
 
+// Print the current configuration
 func (c Config) Print() {
 	repoNamesStr := ""
 	for _, rn := range c.RepositoryNames {
-		repoNamesStr = fmt.Sprintf("%s\t%s\n", repoNamesStr, rn)
+		repoNamesStr = fmt.Sprintf("%s\t\t%s\n", repoNamesStr, rn)
 	}
 	fileBindingsStr := ""
 	for src, dest := range c.FilesBindings {
-		fileBindingsStr = fmt.Sprintf("%s\t%s -> %s\n", fileBindingsStr, src, dest)
+		fileBindingsStr = fmt.Sprintf("%s\t\t%s -> %s\n", fileBindingsStr, src, dest)
 	}
 	configStr := fmt.Sprintln(
-		"\tRepositories:\n\t", repoNamesStr,
-		"\tFiles bindings:\n\t", fileBindingsStr,
+		"\tRepositories:\n", repoNamesStr,
+		"\tFiles bindings:\n", fileBindingsStr,
 		"\tDry Run:", c.IsDryRun,
 		"\n\tIs GitHub token set?", (len(c.GithubToken) != 0),
 		"\n\tGithub host URL: ", c.GithubURL,

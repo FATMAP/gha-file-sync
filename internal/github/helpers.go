@@ -6,7 +6,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
-// GetRepoUrl based on given parameters
 func GetRepoURL(githubHostURL, repoOwner, repoName string) string {
 	return fmt.Sprintf("https://%s/%s/%s.git", githubHostURL, repoOwner, repoName)
 }

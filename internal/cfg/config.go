@@ -9,7 +9,7 @@ import (
 	"github-file-sync/internal/log"
 )
 
-type Config struct { //nolint:govet
+type Config struct {
 	RepositoryNames []string
 	FilesBindings   map[string]string
 

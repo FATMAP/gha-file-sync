@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	mygit "github-file-sync/internal/git"
+	"github-file-sync/internal/git"
 	"github-file-sync/internal/github"
 	"github-file-sync/internal/log"
 
@@ -30,7 +30,7 @@ type Task struct {
 	ghClient  github.Client
 
 	// git config
-	gitRepo *mygit.Repository
+	gitRepo *git.Repository
 
 	// additional config
 	fileSyncBranchRegexp *regexp.Regexp
@@ -78,7 +78,7 @@ func NewTask(
 		return t, err
 	}
 	defaultBranchName := fmt.Sprintf("%s-sync-file-pr", time.Now().Format("2006-01-02"))
-	t.gitRepo, err = mygit.NewRepository(
+	t.gitRepo, err = git.NewRepository(
 		ctx,
 		t.targetPath,
 		github.GetRepoURL(t.ghHostURL, t.owner, t.repoName), defaultBranchName,
@@ -90,7 +90,7 @@ func NewTask(
 	return t, nil
 }
 
-// PickSyncBranch on the repo which will be used to compare files  and push potential changes
+// PickSyncBranch on the repo which will be used to compare files and push potential changes
 // could be:
 // - a new branch based on the repo's HEAD: probably main or master
 // - an existing file sync branch
@@ -107,7 +107,7 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 		// use branch name to see if it is an file sync PR
 		if t.fileSyncBranchRegexp.MatchString(branchName) {
 			if alreadyFound {
-				log.Warnf("it seems there are two existing file sync pull request on repo %s", t.repoName)
+				log.Warnf("it seems there are two existing file sync pull requests on repo %s", t.repoName)
 				// TODO: take the latest one? close the oldest one?
 				break
 			}
@@ -127,7 +127,7 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 	return nil
 }
 
-// HasChangedAfterCopy first update locally files following binding rules
+// HasChangedAfterCopy first updates local files following binding rules
 // then checks the git status and returns true if something has changed
 func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	// return directly if no files bindings defined

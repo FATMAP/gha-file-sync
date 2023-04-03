@@ -48,7 +48,7 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 	// check if anything has changed
 	hasChanged, err := t.HasChangedAfterCopy(ctx)
 	if err != nil {
-		return fmt.Errorf("has changed: %v", err)
+		return fmt.Errorf("checking for changes: %v", err)
 	}
 
 	if hasChanged {

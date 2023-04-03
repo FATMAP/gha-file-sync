@@ -75,7 +75,7 @@ func (c Config) Print() {
 		"\tRepositories:\n", repoNamesStr,
 		"\tFiles bindings:\n", fileBindingsStr,
 		"\tDry Run:", c.IsDryRun,
-		"\n\tIs GitHub token set?", (len(c.GithubToken) != 0),
+		"\n\tGitHub token set?", (len(c.GithubToken) != 0),
 		"\n\tGithub host URL: ", c.GithubURL,
 		"\n\tCommit message: ", c.CommitMessage,
 		"\n\tFile sync branch regexp: ", c.FileSyncBranchRegexp,

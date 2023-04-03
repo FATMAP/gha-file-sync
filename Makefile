@@ -11,3 +11,7 @@ SHELL = /usr/bin/env bash
 .PHONY: run
 run:
 	go build &&	./github-file-sync
+
+.PHONY: lint
+lint:
+	golangci-lint run --config .golangci.yml --timeout 3m

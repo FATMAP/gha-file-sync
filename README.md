@@ -1,6 +1,6 @@
 # gha-file-sync
 
-Github Action for Cross-Repos Files Synchronization using Pull Requests.
+Github Action for Cross-Repo Files Synchronization using Pull Requests.
 ## What 
 
 For a list of given repositories and file bindings, this action will open/update pull requests to synchronize the files that have changed.

@@ -14,7 +14,7 @@ import (
 	cp "github.com/otiai10/copy"
 )
 
-// Task is a handler which synchronize a git repository files on github with current filesystem and given rules called file bindings
+// Task is a handler which synchronizes a git repository files on github with current filesystem and given rules called file bindings
 type Task struct {
 	// repo config
 	repoName string

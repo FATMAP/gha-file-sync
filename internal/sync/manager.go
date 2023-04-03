@@ -18,7 +18,7 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 	owner := repoFullnameSplit[0]
 	repoName := repoFullnameSplit[1]
 
-	t, err := NewTask(
+	task, err := NewTask(
 		ctx,
 		owner, repoName,
 		c.FileSourcePath, c.Workspace,
@@ -32,7 +32,7 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 
 	// ensure we clean data at the end of the sync
 	defer func() {
-		err := t.CleanAll(ctx)
+		err := task.CleanAll(ctx)
 		if err != nil {
 			log.Errorf("cleaning %s: %v", repoFullname, err)
 		}
@@ -40,13 +40,13 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 
 	// compute the sync branch to contribute on
 	// could be a new or existing one
-	err = t.PickSyncBranch(ctx)
+	err = task.PickSyncBranch(ctx)
 	if err != nil {
 		return fmt.Errorf("picking base branch to compare: %v", err)
 	}
 
 	// check if anything has changed
-	hasChanged, err := t.HasChangedAfterCopy(ctx)
+	hasChanged, err := task.HasChangedAfterCopy(ctx)
 	if err != nil {
 		return fmt.Errorf("checking for changes: %v", err)
 	}
@@ -56,7 +56,7 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 		if c.IsDryRun {
 			log.Infof("-> dry run: no concrete write action.")
 		} else {
-			if err := t.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
+			if err := task.UpdateRemote(ctx, c.CommitMessage, c.PRTitle); err != nil {
 				return fmt.Errorf("update remote repo: %v", err)
 			}
 		}

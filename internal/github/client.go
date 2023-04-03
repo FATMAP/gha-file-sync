@@ -14,7 +14,7 @@ type Client struct {
 	*github.Client
 }
 
-// NewClient for github with authentication configured
+// NewClient for github with authentication configured.
 func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
@@ -24,7 +24,7 @@ func NewClient(ctx context.Context, ghToken string) (Client, error) {
 	return Client{c}, nil
 }
 
-// GetAuthenticatedUsername return the username of the current authenticated user
+// GetAuthenticatedUsername return the username of the current authenticated user.
 func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 	user, _, err := c.Client.Users.Get(ctx, "") // empty string makes the library returning the authenticated user
 	if err != nil {
@@ -39,7 +39,7 @@ func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 	return *user.Login, nil
 }
 
-// GetHeadBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs
+// GetHeadBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs.
 func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
 	// max page size is 100: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
 	opt := &github.PullRequestListOptions{State: "open", ListOptions: github.ListOptions{Page: 99}}
@@ -49,7 +49,7 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
 	// log a warning if the number of PR retrieved is the maximum page size
-	if len(prs) == 99 {
+	if len(prs) == 99 { //nolint:gomnd
 		log.Warnf("99 opened PRs on this repository, this may make the synchronization to fail")
 	}
 
@@ -62,8 +62,8 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 	return headBranchNameByPRNumbers, nil
 }
 
-// CreateOrUpdatePR according to the existingPRNumber parameter
-// on update, the desc is added to the Pull Request as a comment
+// CreateOrUpdatePR according to the existingPRNumber parameter.
+// On update, the desc is added to the Pull Request as a comment.
 func (c Client) CreateOrUpdatePR(
 	ctx context.Context, existingPRNumber *int,
 	owner, repoName,

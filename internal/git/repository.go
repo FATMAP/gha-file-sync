@@ -30,7 +30,7 @@ type Repository struct {
 	syncRef        *plumbing.Reference
 }
 
-// NewRepository clones a repository locally based on given parameters and returns a reference to its object
+// NewRepository clones a repository locally based on given parameters and returns a reference to its object.
 func NewRepository(
 	ctx context.Context,
 	localPath, repoURL, syncBranchName string,
@@ -61,8 +61,8 @@ func NewRepository(
 	return r, nil
 }
 
-// GetBaseBranchName based on the repo
-// first it tries to get a "main" branch, then a "master" branch, then it fails
+// GetBaseBranchName based on the repo.
+// First, it tries to get a "main" branch, then a "master" branch, then it fails.
 func (r *Repository) GetBaseBranchName() (string, error) {
 	if r.baseBranchName == "" {
 		c, err := r.repo.Config()
@@ -81,24 +81,24 @@ func (r *Repository) GetBaseBranchName() (string, error) {
 	return r.baseBranchName, nil
 }
 
-// GetSyncBranchName
+// GetSyncBranchName.
 func (r *Repository) GetSyncBranchName() string {
 	return r.syncBranchName
 }
 
-// SetSyncBranchName
+// SetSyncBranchName.
 func (r *Repository) SetSyncBranchName(name string) {
 	r.syncBranchName = name
 }
 
-// IsNotSetup returns true if any important internal state variable is not set
+// IsNotSetup returns true if any important internal state variable is not set.
 func (r *Repository) IsNotSetup() bool {
 	return (r.repo == nil ||
 		r.workTree == nil ||
 		r.syncRef == nil)
 }
 
-// Add, Commit, Push from the current local folder to remote
+// Add, Commit, Push from the current local folder to remote.
 func (r *Repository) AddCommitPush(
 	ctx context.Context, commitMsg string,
 ) error {
@@ -120,7 +120,7 @@ func (r *Repository) AddCommitPush(
 		},
 	}
 	if _, err := r.workTree.Commit(commitMsg, commitOpt); err != nil {
-		return fmt.Errorf("commiting: %v", err)
+		return fmt.Errorf("committing: %v", err)
 	}
 
 	// push to remote
@@ -136,7 +136,7 @@ func (r *Repository) AddCommitPush(
 	return nil
 }
 
-// ChangesDetected returns true if the git status command returns elements
+// ChangesDetected returns true if the git status command returns elements.
 func (r *Repository) ChangeDetected() (bool, error) {
 	statuses, err := r.workTree.Status()
 	if err != nil {
@@ -150,25 +150,26 @@ func (r *Repository) Clean() error {
 	return os.RemoveAll(r.localPath)
 }
 
-// SetupLocalSyncBranch performs low level git operations to setup sync branch
-// it handles it either a remote branch already exist or if it should be created
+// SetupLocalSyncBranch performs low level git operations to setup sync branch,
+// it handles it either a remote branch already exist or if it should be created.
 func (r *Repository) SetupLocalSyncBranch(isNewBranch bool) error {
-	var err error
 	branchConfig := &config.Branch{
 		Name:   r.syncBranchName,
 		Rebase: "true",
 	}
 	// a. new branch mode: symbolic ref and branch merge ref are based on the current local head ref
 	// b. existing branch mode: symbolic ref and branch merge ref are based on the existing remote ref
+	syncBranchRefName := plumbing.NewBranchReferenceName(r.syncBranchName)
 	if isNewBranch { // a
 		headRef, err := r.repo.Head()
 		if err != nil {
 			return fmt.Errorf("getting head: %v", err)
 		}
-		r.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(r.syncBranchName), headRef.Name())
+		r.syncRef = plumbing.NewSymbolicReference(syncBranchRefName, headRef.Name())
 		branchConfig.Merge = r.syncRef.Name()
 	} else { // b
-		r.syncRef = plumbing.NewSymbolicReference(plumbing.NewBranchReferenceName(r.syncBranchName), plumbing.NewRemoteReferenceName("origin", r.syncBranchName))
+		remoteRefName := plumbing.NewRemoteReferenceName("origin", r.syncBranchName)
+		r.syncRef = plumbing.NewSymbolicReference(syncBranchRefName, remoteRefName)
 		branchConfig.Merge = r.syncRef.Name()
 		branchConfig.Remote = r.syncBranchName
 	}
@@ -178,6 +179,7 @@ func (r *Repository) SetupLocalSyncBranch(isNewBranch bool) error {
 		return fmt.Errorf("setting final ref: %v", err)
 	}
 	// init the work tree
+	var err error
 	r.workTree, err = r.repo.Worktree()
 	if err != nil {
 		return fmt.Errorf("getting worktree: %v", err)

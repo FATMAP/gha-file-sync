@@ -10,8 +10,8 @@ import (
 	"github-file-sync/internal/log"
 )
 
-// Do synchronize one repository
-func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.Client) error {
+// Do synchronize one repository.
+func Do(ctx context.Context, repoFullname string, c *cfg.Config, ghClient github.Client) error {
 	log.Infof("Syncing %s...", repoFullname)
 
 	repoFullnameSplit := strings.Split(repoFullname, "/")
@@ -32,9 +32,9 @@ func Do(ctx context.Context, repoFullname string, c cfg.Config, ghClient github.
 
 	// ensure we clean data at the end of the sync
 	defer func() {
-		err := task.CleanAll(ctx)
-		if err != nil {
-			log.Errorf("cleaning %s: %v", repoFullname, err)
+		cleanErr := task.CleanAll(ctx)
+		if cleanErr != nil {
+			log.Errorf("cleaning %s: %v", repoFullname, cleanErr)
 		}
 	}()
 

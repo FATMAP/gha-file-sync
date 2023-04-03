@@ -9,7 +9,7 @@ import (
 	"github-file-sync/internal/log"
 )
 
-type Config struct {
+type Config struct { //nolint:govet
 	RepositoryNames []string
 	FilesBindings   map[string]string
 
@@ -26,8 +26,8 @@ type Config struct {
 	FileSourcePath string // where the source file are stored - set to current dir
 }
 
-// InitConfig based on env variables
-func InitConfig() (c Config, err error) { //nolint:cyclop
+// InitConfig based on env variables.
+func InitConfig() (c *Config, err error) { //nolint:cyclop
 	if c.RepositoryNames, err = getRepositoryNames(); err != nil {
 		return c, err
 	}
@@ -61,8 +61,8 @@ func InitConfig() (c Config, err error) { //nolint:cyclop
 	return c, nil
 }
 
-// Print the current configuration
-func (c Config) Print() {
+// Print the current configuration.
+func (c *Config) Print() {
 	repoNamesStr := ""
 	for _, rn := range c.RepositoryNames {
 		repoNamesStr = fmt.Sprintf("%s\t\t%s\n", repoNamesStr, rn)
@@ -75,7 +75,7 @@ func (c Config) Print() {
 		"\tRepositories:\n", repoNamesStr,
 		"\tFiles bindings:\n", fileBindingsStr,
 		"\tDry Run:", c.IsDryRun,
-		"\n\tGitHub token set?", (len(c.GithubToken) != 0),
+		"\n\tGitHub token set?", (c.GithubToken != ""),
 		"\n\tGithub host URL: ", c.GithubURL,
 		"\n\tCommit message: ", c.CommitMessage,
 		"\n\tFile sync branch regexp: ", c.FileSyncBranchRegexp,
@@ -97,7 +97,7 @@ func getRepositoryNames() ([]string, error) {
 	repoNames := strings.Split(repoNamesStr, "\n")
 
 	for _, name := range repoNames {
-		if len(strings.Split(name, "/")) != 2 {
+		if len(strings.Split(name, "/")) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("invalid repo name: %s {OWNER}/{NAME} expected", name)
 		}
 	}
@@ -119,7 +119,7 @@ func getFilesBindings() (map[string]string, error) {
 	// split each binding by `=` to build the binding map
 	for _, fileBindingStr := range fileBindingsList {
 		split := strings.Split(fileBindingStr, "=")
-		if len(split) != 2 {
+		if len(split) != 2 { //nolint:gomnd
 			return nil, fmt.Errorf("incorrect binding: %s", fileBindingStr)
 		}
 		filesBindings[split[0]] = split[1]
@@ -163,8 +163,8 @@ func getPRTitle() (string, error) {
 	if prTitle == "" {
 		return "", fmt.Errorf("PR_TITLE is empty but required")
 	}
-	// auto-truncate pr title - 80 characters maximum
-	if len(prTitle) > 100 {
+	// auto-truncate pr title - 100 characters maximum
+	if len(prTitle) > 100 { //nolint:gomnd
 		prTitle = prTitle[:99]
 	}
 	return prTitle, nil
@@ -176,7 +176,7 @@ func getCommitMessage() (string, error) {
 		return "", fmt.Errorf("COMMIT_MESSAGE is empty but required")
 	}
 	// auto-truncate commit message - 120 characters maximum
-	if len(commitMessage) > 120 {
+	if len(commitMessage) > 120 { //nolint:gomnd
 		commitMessage = commitMessage[:119]
 	}
 	return commitMessage, nil

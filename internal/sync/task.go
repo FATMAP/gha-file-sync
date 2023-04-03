@@ -14,7 +14,7 @@ import (
 	cp "github.com/otiai10/copy"
 )
 
-// Task is a handler which synchronizes a git repository files on github with current filesystem and given rules called file bindings
+// Task is a handler which synchronizes a git repository files on github with current filesystem and given rules called file bindings.
 type Task struct {
 	// repo config
 	repoName string
@@ -38,13 +38,14 @@ type Task struct {
 
 	// internal state
 
-	// existingPRNumber is used for PR update and also indicates if PR and branch should be created - no distinction between these two elements for now
-	// it is set based on PR first (if sync branch exists without, it is either ignored or results in an error)
+	// existingPRNumber indicates if a PR and a branch should be created, and what is the existing PR number
+	// there is no distinction between the PR & the branch for now:
+	// it is set based on opened PR: if a sync branch exists without a PR, it is either ignored or results in an error
 	existingPRNumber *int
 }
 
-// NewTask configured with default values and given parameters
-// one task per repository
+// NewTask configured with default values and given parameters.
+// One task per repository.
 func NewTask(
 	ctx context.Context,
 	owner, repoName,
@@ -89,8 +90,8 @@ func NewTask(
 
 // PickSyncBranch on the repo which will be used to compare files and push potential changes
 // could be:
-// - a new branch based on the repo's HEAD: probably main or master
-// - an existing file sync branch
+// - a new branch based on the repo's HEAD: probably main or master.
+// - an existing file sync branch.
 func (t *Task) PickSyncBranch(ctx context.Context) error {
 	// try to find an existing file sync branch by checking opened PRs
 	branchNameByPRNumbers, err := t.ghClient.GetHeadBranchNameByPRNumbers(ctx, t.owner, t.repoName)
@@ -102,18 +103,22 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 	alreadyFound := false
 	for prNumber, branchName := range branchNameByPRNumbers {
 		// use branch name to see if it is an file sync PR
-		if t.fileSyncBranchRegexp.MatchString(branchName) {
-			if alreadyFound {
-				log.Warnf("it seems there are two existing file sync pull requests on repo %s", t.repoName)
-				// TODO: take the latest one? close the oldest one?
-				break
-			}
-			alreadyFound = true
-			t.gitRepo.SetSyncBranchName(branchName)
-
-			t.existingPRNumber = new(int)
-			*t.existingPRNumber = prNumber
+		// skip it if it doesn't match
+		if !t.fileSyncBranchRegexp.MatchString(branchName) {
+			continue
 		}
+
+		// if any sync PR was already found, raise a warning about it, keep the first one found by breaking the loop
+		if alreadyFound {
+			log.Warnf("it seems there are two existing file sync pull requests on repo %s", t.repoName)
+			break
+		}
+		// set the existing sync branch and existing PR
+		t.gitRepo.SetSyncBranchName(branchName)
+		t.existingPRNumber = new(int)
+		*t.existingPRNumber = prNumber
+
+		alreadyFound = true
 	}
 
 	// configure the branch locally
@@ -124,8 +129,8 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 	return nil
 }
 
-// HasChangedAfterCopy first updates local files following binding rules
-// then checks the git status and returns true if something has changed
+// HasChangedAfterCopy first updates local files following binding rules,
+// then checks the git status and returns true if something has changed.
 func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 	// return directly if no files bindings defined
 	if len(t.fileBindings) == 0 {
@@ -139,7 +144,7 @@ func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 
 	// 2. copy files from the current repo to the repo-to-sync local path
 	// according to configured bindings
-	atLeastOneSuccess := false
+	notAnyCopySuccess := true
 	for src, dest := range t.fileBindings {
 		// build absolute path to copy
 		src = path.Join(t.sourcePath, src)
@@ -150,9 +155,9 @@ func (t *Task) HasChangedAfterCopy(ctx context.Context) (bool, error) {
 			continue
 		}
 
-		atLeastOneSuccess = true
+		notAnyCopySuccess = false
 	}
-	if !atLeastOneSuccess {
+	if notAnyCopySuccess {
 		return false, fmt.Errorf("not able to copy any file")
 	}
 

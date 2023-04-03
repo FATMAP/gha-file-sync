@@ -18,7 +18,8 @@ func Infof(format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	// skip [Callers, Infof]
+	runtime.Callers(2, pcs[:]) //nolint:gomnd
 	r := slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf(format, args...), pcs[0])
 	_ = l.Handler().Handle(context.Background(), r)
 }
@@ -30,7 +31,8 @@ func Errorf(format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Errorf]
+	// skip [Callers, Errorf]
+	runtime.Callers(2, pcs[:]) //nolint:gomnd
 	r := slog.NewRecord(time.Now(), slog.LevelError, fmt.Sprintf(format, args...), pcs[0])
 	_ = l.Handler().Handle(context.Background(), r)
 }
@@ -42,7 +44,8 @@ func Warnf(format string, args ...any) {
 		return
 	}
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:]) // skip [Callers, Warnf]
+	// skip [Callers, Warnf]
+	runtime.Callers(2, pcs[:]) //nolint:gomnd
 	r := slog.NewRecord(time.Now(), slog.LevelWarn, fmt.Sprintf(format, args...), pcs[0])
 	_ = l.Handler().Handle(context.Background(), r)
 }

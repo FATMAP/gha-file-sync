@@ -84,10 +84,7 @@ func NewTask(
 		github.GetRepoURL(t.ghHostURL, t.owner, t.repoName), defaultBranchName,
 		github.GetBasicAuth(t.ghToken), authorName,
 	)
-	if err != nil {
-		return t, err
-	}
-	return t, nil
+	return t, err
 }
 
 // PickSyncBranch on the repo which will be used to compare files and push potential changes

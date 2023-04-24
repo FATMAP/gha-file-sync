@@ -142,7 +142,7 @@ func (r *Repository) ChangeDetected() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("getting status: %v", err)
 	}
-	// return true of status return a non empty result
+	// return true if statuses is non-zero.
 	return (len(statuses) > 0), nil
 }
 

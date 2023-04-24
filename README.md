@@ -1,6 +1,6 @@
 # gha-file-sync
 
-Github Action for Cross-Repo Files Synchronization using Pull Requests.
+Github Action for Cross-Repo Files Synchronization using automatic Pull Requests.
 ## What 
 
 For a list of given repositories and file bindings, this action will open/update pull requests to synchronize the files that have changed.
@@ -21,12 +21,12 @@ See `action.yml` for more information.
 This action only manages to synchronize new files and updated files.
 Removals or renames are not handled yet.
 
-## Features wished to be added
-
+## Features to add
 
 #### Handling of removed/renamed files
 
 Today, because only a raw copy of the source files is used, the removals and renames of files are not handled yet.
+It is currently advised to blank a file that you want to remove to make it ineffective without having to remove it manually from all repositories.
 #### Commits messages as PR desc
 
 Today, the PR description and comments are pointing by default to the release which triggered the synchronization.

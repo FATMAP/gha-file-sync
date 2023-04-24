@@ -28,6 +28,7 @@ type Config struct {
 
 // InitConfig based on env variables.
 func InitConfig() (c *Config, err error) { //nolint:cyclop
+	c = new(Config)
 	if c.RepositoryNames, err = getRepositoryNames(); err != nil {
 		return c, err
 	}

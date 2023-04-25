@@ -1,0 +1,44 @@
+name: github-file-sync
+author: "SlevinWasAlreadyTaken"
+description: "Help to synchronize files between repositories by opening pull requests."
+inputs:
+  REPOSITORIES:
+    description: "Line-separated list of repositories that should receive files updates through automatic pull requests."
+    required: true
+  FILES_BINDINGS:
+    description: "Line-separated list of files bindings that should be trigger updates"
+    required: true
+  DRY_RUN:
+    description: "Dry run switch: set to false to create for real pull requests"
+    default: 'true'
+  GITHUB_TOKEN:
+    description: "Line-separated list of files bindings that should be trigger updates"
+    required: true
+  GITHUB_URL:
+    description: "The domain of the Github instance hosting your repository"
+    default: "github.com"
+  COMMIT_MESSAGE:
+    description: "Commit message"
+    default: "minor CHORE file synchronization from a gha-file-sync action"
+  PR_TITLE:
+    description: "The title of the sync PR"
+    default: "minor CHORE file synchronization from a gha-file-sync action"
+  FILE_SYNC_BRANCH_REGEXP:
+    description: "Regexp string used to determine if an existing file sync pull request already exists. Update it if found instead of creating a new one."
+    default: "[0-9]{4}-[0-9]{2}-[0-9]{2}-sync-file-pr.*"
+  WORKSPACE:
+    description: "folder for the runner to store temporary files"
+    default: "/tmp"
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    REPOSITORIES: ${{ inputs.REPOSITORIES }}
+    FILES_BINDINGS: ${{ inputs.FILES_BINDINGS }}
+    DRY_RUN: ${{ inputs.DRY_RUN }}
+    GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+    GITHUB_URL: ${{ inputs.GITHUB_URL }}
+    COMMIT_MESSAGE: ${{ inputs.COMMIT_MESSAGE }}
+    PR_TITLE: ${{ inputs.PR_TITLE }}
+    FILE_SYNC_BRANCH_REGEXP: ${{ inputs.FILE_SYNC_BRANCH_REGEXP }}
+    WORKSPACE: ${{ inputs.WORKSPACE }}

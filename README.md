@@ -10,7 +10,6 @@ A Simple Github Action for Cross-Repo Files Synchronization using automatic Pull
     <a href="#license">
         <img src="https://shields.io/badge/license-MIT-%23373737" />
     </a>
-
     <a href="https://godoc.org/github.com/FATMAP/gha-file-sync">
       <img src="https://godoc.org/github.com/FATMAP/gha-file-sync?status.svg" alt="GoDoc">
     </a>

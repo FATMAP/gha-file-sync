@@ -7,7 +7,7 @@ A Simple Github Action for Cross-Repo Files Synchronization using automatic Pull
 </p>
 
 <p align="center">
-    <a href="#license"> # TODO waiting for license to be defined
+    <a href="#license">
         <img src="https://shields.io/badge/license-MIT-%23373737" />
     </a>
 

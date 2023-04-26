@@ -7,6 +7,10 @@ A Simple Github Action for Cross-Repo Files Synchronization using automatic Pull
 </p>
 
 <p align="center">
+    <a href="#license">
+        <img src="https://shields.io/badge/license-MIT-%23373737" />
+    </a>
+
     <a href="https://godoc.org/github.com/FATMAP/gha-file-sync">
       <img src="https://godoc.org/github.com/FATMAP/gha-file-sync?status.svg" alt="GoDoc">
     </a>
@@ -59,6 +63,10 @@ In order to find customization, it should compare the target files with the vers
   - WARN in a comment
 
 # Additional Information
+
+## License
+
+See the `LICENSE` file.
 
 ## Assets
 

@@ -52,12 +52,15 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 
 	defer resp.Body.Close()
 
+	fmt.Println("owner: ", owner, "repo: ", repoName)
+	fmt.Println("status: ", resp.StatusCode)
 	b, err := io.ReadAll(resp.Body)
 	// b, err := ioutil.ReadAll(resp.Body)  Go.1.15 and earlier
 	if err != nil {
 		fmt.Println("noooooo:", err)
+	} else {
+		fmt.Printf("pr request body:\n %s\n", string(b))
 	}
-	fmt.Printf("pr request body:\n %s\n", string(b))
 
 	// log a warning if the number of PR retrieved is the maximum page size
 	if len(prs) == 99 { //nolint:gomnd

@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github-file-sync/internal/log"
 
@@ -48,7 +49,16 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 	if err != nil {
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
-	fmt.Printf("pr request body:\n %v\n", resp.Body)
+
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	// b, err := ioutil.ReadAll(resp.Body)  Go.1.15 and earlier
+	if err != nil {
+		fmt.Println("noooooo:", err)
+	}
+	fmt.Printf("pr request body:\n %s\n", string(b))
+
 	// log a warning if the number of PR retrieved is the maximum page size
 	if len(prs) == 99 { //nolint:gomnd
 		log.Warnf("99 opened PRs on this repository, this may make the synchronization to fail")

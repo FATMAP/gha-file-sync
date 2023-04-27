@@ -102,6 +102,7 @@ func (t *Task) PickSyncBranch(ctx context.Context) error {
 	// try to find an existing file sync PR
 	alreadyFound := false
 	for prNumber, branchName := range branchNameByPRNumbers {
+		fmt.Println("checking with pr and branch:", prNumber, branchName)
 		// use branch name to see if it is an file sync PR
 		// skip it if it doesn't match
 		if !t.fileSyncBranchRegexp.MatchString(branchName) {

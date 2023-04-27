@@ -35,9 +35,6 @@ func main() {
 	// start synchronization
 	log.Infof("Let's sync")
 	for _, repoName := range config.RepositoryNames {
-		if repoName != "FATMAP/bundler" {
-			continue
-		}
 		if err := sync.Do(ctx, repoName, config, ghClient); err != nil {
 			log.Errorf("syncing %s: %v", repoName, err)
 		}

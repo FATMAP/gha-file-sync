@@ -53,6 +53,7 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 		log.Warnf("99 opened PRs on this repository, this may make the synchronization to fail")
 	}
 
+	fmt.Println("number of PR found: ", len(prs))
 	headBranchNameByPRNumbers := make(map[int]string, len(prs))
 	for _, pr := range prs {
 		if pr.Head.Ref != nil && pr.Number != nil {

@@ -44,10 +44,11 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 	// max page size is 100: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
 	opt := &github.PullRequestListOptions{State: "open", ListOptions: github.ListOptions{Page: 99}}
 
-	prs, _, err := c.Client.PullRequests.List(ctx, owner, repoName, opt)
+	prs, resp, err := c.Client.PullRequests.List(ctx, owner, repoName, opt)
 	if err != nil {
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
+	fmt.Printf("pr request body:\n %v\n", resp.Body)
 	// log a warning if the number of PR retrieved is the maximum page size
 	if len(prs) == 99 { //nolint:gomnd
 		log.Warnf("99 opened PRs on this repository, this may make the synchronization to fail")

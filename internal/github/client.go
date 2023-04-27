@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"fmt"
-	"io"
 
 	"github-file-sync/internal/log"
 
@@ -44,7 +43,7 @@ func (c Client) GetAuthenticatedUsername(ctx context.Context) (string, error) {
 // GetHeadBranchNameByPRNumbers for a given repository as a map. Consider only opened PRs.
 func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoName string) (map[int]string, error) {
 	// max page size is 100: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
-	opt := &github.PullRequestListOptions{State: "all", ListOptions: github.ListOptions{Page: 99}}
+	opt := &github.PullRequestListOptions{State: "all", ListOptions: github.ListOptions{PerPage: 99}}
 
 	prs, resp, err := c.Client.PullRequests.List(ctx, owner, repoName, opt)
 	if err != nil {
@@ -52,17 +51,6 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 	}
 
 	defer resp.Body.Close()
-
-	fmt.Println("number of PR found: ", len(prs))
-	fmt.Println("owner: ", owner, "repo: ", repoName)
-	fmt.Println("status: ", resp.StatusCode)
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("noooooo:", err)
-	} else {
-		fmt.Printf("pr request body:\n %s\n", string(b))
-	}
 
 	// log a warning if the number of PR retrieved is the maximum page size
 	if len(prs) == 99 { //nolint:gomnd

@@ -49,7 +49,6 @@ func (c Client) GetHeadBranchNameByPRNumbers(ctx context.Context, owner, repoNam
 	if err != nil {
 		return nil, fmt.Errorf("listing prs: %v", err)
 	}
-
 	defer resp.Body.Close()
 
 	// log a warning if the number of PR retrieved is the maximum page size

@@ -1,4 +1,4 @@
-module github-file-sync
+module gha-file-sync
 
 go 1.20
 

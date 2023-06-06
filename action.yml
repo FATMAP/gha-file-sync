@@ -1,4 +1,4 @@
-name: github-file-sync
+name: gha-file-sync
 author: "SlevinWasAlreadyTaken"
 description: "Help to synchronize files between repositories by opening pull requests."
 inputs:

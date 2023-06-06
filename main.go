@@ -4,10 +4,10 @@ import (
 	"context"
 	"os"
 
-	"github-file-sync/internal/cfg"
-	"github-file-sync/internal/github"
-	"github-file-sync/internal/log"
-	"github-file-sync/internal/sync"
+	"gha-file-sync/internal/cfg"
+	"gha-file-sync/internal/github"
+	"gha-file-sync/internal/log"
+	"gha-file-sync/internal/sync"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github-file-sync/internal/cfg"
-	"github-file-sync/internal/github"
-	"github-file-sync/internal/log"
+	"gha-file-sync/internal/cfg"
+	"gha-file-sync/internal/github"
+	"gha-file-sync/internal/log"
 )
 
 // Do synchronize one repository.

@@ -6,6 +6,7 @@ import (
 
 	"gha-file-sync/internal/log"
 
+	"github.com/gofri/go-github-ratelimit/github_ratelimit"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
@@ -15,13 +16,19 @@ type Client struct {
 }
 
 // NewClient for github with authentication configured.
-func NewClient(ctx context.Context, ghToken string) (Client, error) {
+func NewClient(ctx context.Context, ghToken string) (*Client, error) {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: ghToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
-	c := github.NewClient(tc)
-	return Client{c}, nil
+	// use a rate limiter to handle better the github api limit
+	// focuses on the secondary limit: https://github.com/google/go-github#rate-limiting
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(tc.Transport)
+	if err != nil {
+		return nil, err
+	}
+	c := github.NewClient(rateLimiter)
+	return &Client{c}, nil
 }
 
 // GetAuthenticatedUsername return the username of the current authenticated user.

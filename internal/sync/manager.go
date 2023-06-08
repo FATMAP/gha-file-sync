@@ -11,7 +11,7 @@ import (
 )
 
 // Do synchronize one repository.
-func Do(ctx context.Context, repoFullname string, c *cfg.Config, ghClient github.Client) error {
+func Do(ctx context.Context, repoFullname string, c *cfg.Config, ghClient *github.Client) error {
 	log.Infof("Syncing %s...", repoFullname)
 
 	repoFullnameSplit := strings.Split(repoFullname, "/")

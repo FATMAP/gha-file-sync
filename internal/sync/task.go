@@ -27,7 +27,7 @@ type Task struct {
 	// github config
 	ghHostURL string
 	ghToken   string
-	ghClient  github.Client
+	ghClient  *github.Client
 
 	// git config
 	gitRepo *git.Repository
@@ -51,7 +51,7 @@ func NewTask(
 	owner, repoName,
 	baseSourcePath, baseTargetPath,
 	ghURL, ghToken string,
-	ghClient github.Client,
+	ghClient *github.Client,
 	fileSyncBranchRegexpStr string,
 	fileBindings map[string]string,
 ) (t Task, err error) {

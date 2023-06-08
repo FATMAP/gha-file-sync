@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/go-git/go-git/v5 v5.6.1
+	github.com/gofri/go-github-ratelimit v1.0.3
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/otiai10/copy v1.9.0
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29

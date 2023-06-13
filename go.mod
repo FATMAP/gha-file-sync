@@ -2,6 +2,11 @@ module gha-file-sync
 
 go 1.20
 
+retract (
+	v1.0.0 // invalid package name
+	v1.0.1 // invalid package name
+)
+
 require (
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/gofri/go-github-ratelimit v1.0.3

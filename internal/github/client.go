@@ -23,7 +23,10 @@ func NewClient(ctx context.Context, ghToken string) (*Client, error) {
 	tc := oauth2.NewClient(ctx, ts)
 	// use a rate limiter to handle better the github api limit
 	// focuses on the secondary limit: https://github.com/google/go-github#rate-limiting
-	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(tc.Transport)
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(
+		tc.Transport,
+		github_ratelimit.WithLimitDetectedCallback(LogOnLimitDetected),
+	)
 	if err != nil {
 		return nil, err
 	}

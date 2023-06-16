@@ -27,7 +27,7 @@ func Do(ctx context.Context, repoFullname string, c *cfg.Config, ghClient *githu
 		c.FilesBindings,
 	)
 	if err != nil {
-		return fmt.Errorf("create repo manager: %v", err)
+		return fmt.Errorf("creating task: %v", err)
 	}
 
 	// ensure we clean data at the end of the sync

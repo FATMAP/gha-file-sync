@@ -46,6 +46,10 @@ func NewRepository(
 		authorName: authorName,
 	}
 
+	// first clean any remains for older sync that went wrong
+	// ignore errors
+	_ = r.Clean()
+
 	// try to clone to local path
 	opt := &git.CloneOptions{
 		URL:  r.repoURL,

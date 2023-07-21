@@ -1,6 +1,9 @@
 name: gha-file-sync
 author: "SlevinWasAlreadyTaken"
-description: "Help to synchronize files between repositories by opening pull requests."
+description: "Help to synchronize files from one repository to many by opening pull requests according to configured path bindings."
+branding:
+  icon: refresh-cw
+  color: purple
 inputs:
   REPOSITORIES:
     description: "Line-separated list of repositories that should receive files updates through automatic pull requests."

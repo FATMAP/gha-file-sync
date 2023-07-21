@@ -30,10 +30,17 @@ For each targeted repository:
 ## Configuration
 
 See `action.yml` for more information about configuration
+
 ## Known issues
+
+### File deletion/rename are not handled.
 
 This action only manages to synchronize new files and updated files. Removals or renames are not handled yet.
 :arrow_right: It is currently advised to blank a file that you want to remove to make it ineffective without having to remove it manually from all repositories.
+
+### Pull Request Creations/Updates can take hours.
+
+The action aims to respect Github API Rate (primary & secondary) Limits and to never fail. It uses a rate limiter which bases itself on HTTP headers returned by Github. The action can then take lot of time to be executed though since it waits for the rate-limit-reset time to be reached after each write operation. It can take from some seconds to some hours depending on how many repositories need to be synchronised.
 
 ## Potential Improvements
 
